@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 from __future__ import print_function
+import cgi
+import os
+import os.path
+import glob
+import re
+
 # for f in *.jpg; do convert -resize x200 -quality 50% $f t\
 #    /$f; done
 # https://github.com/cebe/js-search
@@ -16,11 +22,6 @@ tail = """</body>
 </html>
 """
 
-import cgi
-import os
-import os.path
-import glob
-import re
 dirs = sorted(list(glob.glob('[0-9][0-9]-[0-9][0-9]')))
 for d in dirs:
     os.chdir(d)

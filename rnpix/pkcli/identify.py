@@ -1,5 +1,13 @@
-#!/usr/bin/env python
-from __future__ import print_function
+# -*- coding: utf-8 -*-
+u"""Identify photos and store in index.txt database.
+
+The directory structure of pictures is pix/yyyy/mm-dd/*.{jpg,png,...}
+Each day directory has index.txt, which is edited by this program.
+
+:copyright: Copyright (c) 2016 Rob Nagler.  All Rights Reserved.
+:license: http://www.apache.org/licenses/LICENSE-2.0.html
+"""
+from __future__ import absolute_import, division, print_function
 import glob
 import os
 import os.path
@@ -7,6 +15,35 @@ import re
 import subprocess
 import sys
 import uuid
+
+def default_command(*args, **kwargs):
+    args = sys.argv[1:]
+    if args:
+        _one_day(args)
+    else:
+        dirs = glob.glob('[0-9][0-9]-[0-9][0-9]')
+        if dirs:
+            _search_all_dirs(dirs)
+        else:
+            _one_day(_need_to_index())
+
+def _clean_name(old):
+    new = re.sub(r'[^\-\.\w]+', '-', old.lower())
+    new = re.sub(r'\.(jpeg|thm)$', '.jpg', new)
+    if new == old:
+        return old
+    if new == old.lower():
+        tmp = str(uuid.uuid4())
+        assert not os.path.exists(tmp), \
+            '{}: tmp file exists, cannot rename {}'.format(tmp, old)
+        os.rename(old, tmp)
+    else:
+        tmp = old
+    assert not os.path.exists(new), \
+        '{}: new file exists, cannot rename {}'.format(new, tmp)
+    os.rename(tmp, new)
+    return new
+
 
 def _indexed():
     res = {}
@@ -28,23 +65,6 @@ def _indexed():
                 continue
             res[t] = 1
     return res
-
-def _clean_name(old):
-    new = re.sub(r'[^\-\.\w]+', '-', old.lower())
-    new = re.sub(r'\.(jpeg|thm)$', '.jpg', new)
-    if new == old:
-        return old
-    if new == old.lower():
-        tmp = str(uuid.uuid4())
-        assert not os.path.exists(tmp), \
-            '{}: tmp file exists, cannot rename {}'.format(tmp, old)
-        os.rename(old, tmp)
-    else:
-        tmp = old
-    assert not os.path.exists(new), \
-        '{}: new file exists, cannot rename {}'.format(new, tmp)
-    os.rename(tmp, new)
-    return new
 
 
 def _need_to_index():
@@ -105,14 +125,3 @@ def _search_all_dirs(dirs):
                 return
         finally:
             os.chdir(cwd)
-
-
-args = sys.argv[1:]
-if args:
-    _one_day(args)
-else:
-    dirs = glob.glob('[0-9][0-9]-[0-9][0-9]')
-    if dirs:
-        _search_all_dirs(dirs)
-    else:
-        _one_day(_need_to_index())
