@@ -4,6 +4,8 @@ u"""Identify photos and store in index.txt database.
 The directory structure of pictures is pix/yyyy/mm-dd/*.{jpg,png,...}
 Each day directory has index.txt, which is edited by this program.
 
+https://github.com/cebe/js-search
+
 :copyright: Copyright (c) 2016 Rob Nagler.  All Rights Reserved.
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
@@ -16,16 +18,19 @@ import subprocess
 import sys
 import uuid
 
-def default_command(*args, **kwargs):
-    args = sys.argv[1:]
-    if args:
-        _one_day(args)
+def default_command(*date_dir):
+    """Search in date_dir or all dirs in year
+    """
+    if date_dir:
+        for d in date_dir:
+            _one_day(date_dir)
     else:
         dirs = glob.glob('[0-9][0-9]-[0-9][0-9]')
         if dirs:
             _search_all_dirs(dirs)
         else:
             _one_day(_need_to_index())
+
 
 def _clean_name(old):
     new = re.sub(r'[^\-\.\w]+', '-', old.lower())
@@ -94,7 +99,10 @@ def _one_day(args):
         if not os.path.exists(img):
             continue
         with open('index.txt', 'a') as f:
-            subprocess.check_call(['open', '-a', 'Preview.app', img])
+            if re.search(r'\.(mp4|mov)$', img, flags=re.IGNORECASE):
+                subprocess.check_call(['open', '-a', 'QuickTime Player.app', img])
+            else:
+                subprocess.check_call(['open', '-a', 'Preview.app', img])
             msg = raw_input(a + ': ')
             if not msg:
                 status = False
