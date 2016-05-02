@@ -1,7 +1,13 @@
-img {
+body.rnpix img {
   max-width: 100%;
 }
-body.figure {
+body.rnpix figure {
   display: inline-block;
   vertical-align: top;
+}
+body.rnpix figcaption {
+  /* this is a fudge; assumes thumbs x200 */
+  width: 300px;
+  display: block;
+  caption-side: bottom;
 }
