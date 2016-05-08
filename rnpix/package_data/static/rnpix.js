@@ -4,11 +4,12 @@ var rnpix = {
             .reduce(
                 function(files, word) {
                     if (! (word in rnpix.index.words)) {
-                        return files;
+                        return [];
                     }
                     var f = rnpix.index.words[word];
-                    res = files.length ? _.intersection(files, f).toArray()
+                    res = files.length ? _.intersection(files, f)
                         : f;
+                    console.log(res);
                     return res;
                 },
                 []
@@ -48,7 +49,7 @@ var rnpix = {
     tokenize: function(string) {
         return _.chain(string.toLowerCase().split(/\W+/))
             .filter(function(word) {
-                return !(word in rnpix.stopWords);
+                return word.length && !(word in rnpix.stopWords);
             })
             .uniq();
     }

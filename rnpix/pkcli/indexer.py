@@ -11,6 +11,7 @@ import json
 import os.path
 import py.path
 import re
+import string
 
 _DIR_RE = re.compile(r'(.+)/(\d{4})/(\d\d)-(\d\d)$')
 
@@ -18,15 +19,14 @@ _LINE_RE = re.compile(r'^(.+?):?\s+(.+)')
 
 _DELIMITER_RE = re.compile(r'\W+')
 
-_STOP_WORDS = [
+_STOP_WORDS = set((
     # default lucene http://stackoverflow.com/questions/17527741/what-is-the-default-list-of-stopwords-used-in-lucenes-stopfilter
-    'a', 'an', 'and', 'are', 'as', 'at', 'be', 'but', 'by',
+    'an', 'and', 'are', 'as', 'at', 'be', 'but', 'by',
     'for', 'if', 'in', 'into', 'is', 'it',
     'no', 'not', 'of', 'on', 'or', 'such',
     'that', 'the', 'their', 'then', 'there', 'these',
-    'they', 'this', 'to', 'was', 'will', 'with'
-]
-_STOP_WORDS = dict(zip(_STOP_WORDS, xrange(len(_STOP_WORDS))))
+    'they', 'this', 'to', 'was', 'will', 'with',
+)) | set(string.lowercase) | set(string.digits)
 
 def default_command():
     res = _search_and_parse()

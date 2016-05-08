@@ -6,8 +6,9 @@ u"""?
 """
 from __future__ import absolute_import, division, print_function
 
-from pykern.pkdebug import pkdp
+from pykern import pkcli
 from pykern import pkio
+from pykern.pkdebug import pkdp
 import cgi
 import glob
 import os
@@ -20,7 +21,12 @@ import subprocess
 #    /$f; done
 # https://github.com/cebe/js-search
 
+_IMAGE_RE = re.compile(r'(.+)\.(mp4|jpg|png|pdf|mov|jpg|thm|jpeg)$', flags=re.IGNORECASE)
+
 _DIR_RE = re.compile(r'/(\d{4})/(\d\d)-(\d\d)$')
+
+_MM_DD = '[0-9][0-9]-[0-9][0-9]'
+_YYYY_MM_DD = '[0-9][0-9][0-9][0-9]/' + _MM_DD
 
 _HTML = """<html>
 <head>
@@ -29,7 +35,7 @@ _HTML = """<html>
 <title>{title}</title>
 </head>
 <body class="rnpix_day">
-<a class="rnpix_search" href="../../index.html">Search</a>
+<span class="rnpix_head"><span class="rnpix_title">{title}</span><a class="rnpix_button" href="../../index.html">Search</a></span>
 {body}
 </body>
 </html>
@@ -50,7 +56,12 @@ def default_command(force=False):
     if _DIR_RE.search(os.getcwd()):
         _one_dir(force)
     else:
-        for d in sorted(list(glob.glob('[0-9][0-9]-[0-9][0-9]'))):
+        dirs = list(glob.glob(_MM_DD))
+        if not dirs:
+            dirs = list(glob.glob(_YYYY_MM_DD))
+            if not dirs:
+                pkcli.command_error('no directories matching YYYY or MM-DD')
+        for d in sorted(dirs):
             with pkio.save_chdir(d):
                 _one_dir(force)
 
@@ -60,7 +71,8 @@ def _index_parser(lines, err, force):
     for l in lines:
         m = _LINE_RE.search(l)
         if not m:
-            err('invalid line: ' + l)
+            if re.search(r'\S', l):
+                err('invalid line: ' + l)
             continue
         i = m.group(1)
         body += _IMG_HTML.format(
@@ -75,17 +87,19 @@ def _one_dir(force):
     d = os.getcwd()
     def err(msg):
         pkdp('{}: {}'.format(d, msg))
-    if not os.path.exists('index.txt'):
-        err('no index.txt')
-        return
     m = _DIR_RE.search(d)
     if not m:
         err('directory does not match date format')
         return
     title = '{:d}/{:d}/{:d}'.format(
         int(m.group(2)), int(m.group(3)), int(m.group(1)))
-    with open('index.txt') as f:
-        body = _index_parser(list(f), err, force)
+    try:
+        with open('index.txt') as f:
+            lines = list(f)
+    except IOError:
+        err('no index.txt')
+        return
+    body = _index_parser(lines, err, force)
     if force or not os.path.exists(_INDEX_FILE):
         with open(_INDEX_FILE, 'w') as f:
             f.write(_HTML.format(title=title, body=body))
@@ -93,21 +107,25 @@ def _one_dir(force):
 
 def _thumb(image, force):
     """Returns larger size"""
-    for size, quality in ('50', '40'), ('150', '80'):
+    for size, quality in ('50', '25'), ('200', '50'):
         t = re.sub(r'\w+$', 'jpg', os.path.join(size, image))
         if force or not os.path.exists(t):
-            pkio.mkdir_parent(py.path.local(t).dirname)
-            subprocess.check_call([
-                'convert',
-                '-thumbnail',
-                'x' + size,
-                '-quality',
-                quality + '%',
-                '-background',
-                'white',
-                '-alpha',
-                'remove',
-                image + '[0]',
-                t,
-            ])
+            d = pkio.mkdir_parent(py.path.local(t).dirname)
+            try:
+                subprocess.check_call([
+                    'convert',
+                    '-thumbnail',
+                    'x' + size,
+                    '-quality',
+                    quality + '%',
+                    '-background',
+                    'white',
+                    '-alpha',
+                    'remove',
+                    image + '[0]',
+                    t,
+                ])
+            except:
+                pkdp('dir={}', d)
+                raise
     return t

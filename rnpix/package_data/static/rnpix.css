@@ -9,23 +9,23 @@ figure {
   -webkit-margin-end: 0;
 }
 
-.rnpix_day img {
-  max-width: 100%;
-}
-.rnpix_day figure {
-  display: inline-block;
-  vertical-align: top;
-}
-.rnpix_day figcaption {
-  /* this is a fudge; assumes thumbs x150 */
-  width: 250px;
+.rnpix_head {
+  width: auto;
   display: block;
-  caption-side: bottom;
+  margin-bottom: 10px;
 }
 
-.rnpix_day a.rnpix_search {
+.rnpix_head .rnpix_title {
+  font-weight: bold;
+  font-size: 18px;
+  width: auto;
+  margin-right: 20px;
+  text-align: center;
+}
+.rnpix_head a.rnpix_button {
+  font-family: Arial,Helvetica Neue,Helvetica,sans-serif; 
   margin: auto;
-  display: block;
+  display: inline-block;
   width: 5em;
   text-align: center;
   font: 24px bold;
@@ -37,6 +37,24 @@ figure {
   -moz-border-radius: 5px;
   -webkit-border-radius: 5px;
   border-radius: 5px;
+}
+
+.rnpix_day img {
+  max-width: 100%;
+}
+
+.rnpix_day figure {
+  display: inline-block;
+  vertical-align: top;
+  margin: 10px;
+}
+
+.rnpix_day figcaption {
+  /* this is a fudge; assumes thumbs x150 */
+  margin-top: 5px;
+  width: 300px;
+  display: block;
+  caption-side: bottom;
 }
 
 .rnpix_search_widget input {
