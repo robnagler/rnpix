@@ -12,6 +12,7 @@ import cgi
 import glob
 import os
 import os.path
+import py.path
 import re
 import subprocess
 
@@ -27,20 +28,18 @@ _HTML = """<html>
 <link rel="stylesheet" type="text/css" href="../../rnpix/package_data/static/rnpix.css">
 <title>{title}</title>
 </head>
-<body class="rnpix">
+<body class="rnpix_day">
 <a class="rnpix_search" href="../../index.html">Search</a>
 {body}
 </body>
 </html>
 """
 
-_IMG_HTML = "<figure><img src='{thumb}' onclick='this.src=" + '"{image}"' + "' /><figcaption>{caption}</figcaption></figure></a>\n"
+_IMG_HTML = "<figure><img src='{thumb}' onclick='this.src=" + '"{image}"' + "' /><figcaption>{caption}</figcaption></figure>\n"
 
 _LINE_RE = re.compile(r'^(.+?):?\s+(.+)')
 
 _INDEX_FILE = 'index.html'
-
-_THUMB_DIR = 't'
 
 def default_command(force=False):
     """Generate index.html files in mm-dd subdirectories
@@ -93,8 +92,22 @@ def _one_dir(force):
 
 
 def _thumb(image, force):
-    t = re.sub(r'\w+$', 'jpg', os.path.join(_THUMB_DIR, image))
-    if force or not os.path.exists(t):
-        pkio.mkdir_parent(_THUMB_DIR)
-        subprocess.check_call(['convert', '-thumbnail', 'x200', '-background', 'white', '-alpha', 'remove', image + '[0]', t])
+    """Returns larger size"""
+    for size, quality in ('50', '40'), ('150', '80'):
+        t = re.sub(r'\w+$', 'jpg', os.path.join(size, image))
+        if force or not os.path.exists(t):
+            pkio.mkdir_parent(py.path.local(t).dirname)
+            subprocess.check_call([
+                'convert',
+                '-thumbnail',
+                'x' + size,
+                '-quality',
+                quality + '%',
+                '-background',
+                'white',
+                '-alpha',
+                'remove',
+                image + '[0]',
+                t,
+            ])
     return t

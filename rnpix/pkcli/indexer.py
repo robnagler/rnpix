@@ -12,7 +12,7 @@ import os.path
 import py.path
 import re
 
-_DIR_RE = re.compile(r'/(\d{4})/(\d\d)-(\d\d)$')
+_DIR_RE = re.compile(r'(.+)/(\d{4})/(\d\d)-(\d\d)$')
 
 _LINE_RE = re.compile(r'^(.+?):?\s+(.+)')
 
@@ -94,14 +94,14 @@ def _search_and_parse():
         'titles': [],
         'words': {},
     }
-    cwd = py.path.local()
     for f, fi in zip(files, xrange(len(files))):
         s = _DIR_RE.search(f.dirname)
         assert s, '{}: non-date dirname'.format(f)
-        y, m, d = s.group(1, 2, 3)
+        root = py.path.local(s.group(1))
+        y, m, d = s.group(2, 3, 4)
         _add_words(res['words'], fi, [y, y + m, y + m + d])
         w, i, t = _index_parse(str(f), fi)
-        res['links'].append(cwd.bestrelpath(py.path.local(f.dirname)))
+        res['links'].append(root.bestrelpath(py.path.local(f.dirname)))
         res['images'].append(_thumb(i))
         res['titles'].append('{}/{}/{}{}'.format(m, d, y, t))
         _add_words(res['words'], fi, w)

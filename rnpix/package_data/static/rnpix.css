@@ -1,22 +1,34 @@
-body.rnpix img {
+body {
+  font-family: Arial,Helvetica Neue,Helvetica,sans-serif; 
+}
+
+figure {
+  -webkit-margin-before: 0;
+  -webkit-margin-after: 0;
+  -webkit-margin-start: 0;
+  -webkit-margin-end: 0;
+}
+
+.rnpix_day img {
   max-width: 100%;
 }
-body.rnpix figure {
+.rnpix_day figure {
   display: inline-block;
   vertical-align: top;
 }
-body.rnpix figcaption {
-  /* this is a fudge; assumes thumbs x200 */
-  width: 300px;
+.rnpix_day figcaption {
+  /* this is a fudge; assumes thumbs x150 */
+  width: 250px;
   display: block;
   caption-side: bottom;
 }
 
-body.rnpix a.rnpix_search {
+.rnpix_day a.rnpix_search {
+  margin: auto;
   display: block;
-  width: 10em;
+  width: 5em;
   text-align: center;
-  font: bold;
+  font: 24px bold;
   text-decoration: none;
   background-color: #EEE;
   color: #333;
@@ -25,4 +37,35 @@ body.rnpix a.rnpix_search {
   -moz-border-radius: 5px;
   -webkit-border-radius: 5px;
   border-radius: 5px;
+}
+
+.rnpix_search_widget input {
+  width: 410px;
+}
+
+.rnpix_search_widget figure {
+  margin-top: 20px;
+}
+
+.rnpix_search_widget figure img {
+  vertical-align: top;
+}
+
+.rnpix_search_widget figure .rnpix_image {
+  text-align: right;
+  vertical-align: top;
+  display: inline-block;
+  width: 100px;
+  margin-right: 10px;
+}
+
+.rnpix_search_widget figure figcaption {
+  text-align: left;
+  display: inline-block;
+  max-width: 300px;
+}
+
+.rnpix_search_widget a {
+  text-decoration: none;
+  color: black;
 }

@@ -17,20 +17,22 @@ var rnpix = {
                 function(f) {
                     return {
                         title: rnpix.index.titles[f],
-                        link: rnpix.indexLink(f)
+                        link: rnpix.link(f),
+                        image: rnpix.image(f)
                     };
                 }
-            ).toArray();
+            ).toArray()
+            .value();
     },
 
-    imageLink: function(fileIndex) {
+    image: function(fileIndex) {
         return rnpix.index.links[fileIndex]
-            + '/t/'
+            + '/50/'
             + rnpix.index.images[fileIndex]
             + '.jpg';
     },
 
-    indexLink: function(fileIndex) {
+    link: function(fileIndex) {
         return rnpix.index.links[fileIndex] + '/index.html'
     },
 
