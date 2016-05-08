@@ -24,10 +24,11 @@ _DIR_RE = re.compile(r'/(\d{4})/(\d\d)-(\d\d)$')
 _HTML = """<html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" type="text/css" href="../../rnpix/package_data/static/pix.css">
+<link rel="stylesheet" type="text/css" href="../../rnpix/package_data/static/rnpix.css">
 <title>{title}</title>
 </head>
 <body class="rnpix">
+<a class="rnpix_search" href="../../index.html">Search</a>
 {body}
 </body>
 </html>
@@ -41,21 +42,21 @@ _INDEX_FILE = 'index.html'
 
 _THUMB_DIR = 't'
 
-def default_command(redo=False):
+def default_command(force=False):
     """Generate index.html files in mm-dd subdirectories
 
     Args:
-        redo (bool): redo thumbs and indexes even if they exist
+        force (bool): force thumbs and indexes even if they exist
     """
     if _DIR_RE.search(os.getcwd()):
-        _one_dir(redo)
+        _one_dir(force)
     else:
         for d in sorted(list(glob.glob('[0-9][0-9]-[0-9][0-9]'))):
             with pkio.save_chdir(d):
-                _one_dir(redo)
+                _one_dir(force)
 
 
-def _index_parser(lines, err, redo):
+def _index_parser(lines, err, force):
     body = ''
     for l in lines:
         m = _LINE_RE.search(l)
@@ -65,13 +66,13 @@ def _index_parser(lines, err, redo):
         i = m.group(1)
         body += _IMG_HTML.format(
             image=i,
-            thumb=_thumb(i, redo),
+            thumb=_thumb(i, force),
             caption=cgi.escape(m.group(2)),
         )
     return body
 
 
-def _one_dir(redo):
+def _one_dir(force):
     d = os.getcwd()
     def err(msg):
         pkdp('{}: {}'.format(d, msg))
@@ -85,15 +86,15 @@ def _one_dir(redo):
     title = '{:d}/{:d}/{:d}'.format(
         int(m.group(2)), int(m.group(3)), int(m.group(1)))
     with open('index.txt') as f:
-        body = _index_parser(list(f), err, redo)
-    if redo or not os.path.exists(_INDEX_FILE):
+        body = _index_parser(list(f), err, force)
+    if force or not os.path.exists(_INDEX_FILE):
         with open(_INDEX_FILE, 'w') as f:
             f.write(_HTML.format(title=title, body=body))
 
 
-def _thumb(image, redo):
+def _thumb(image, force):
     t = re.sub(r'\w+$', 'jpg', os.path.join(_THUMB_DIR, image))
-    if redo or not os.path.exists(t):
+    if force or not os.path.exists(t):
         pkio.mkdir_parent(_THUMB_DIR)
         subprocess.check_call(['convert', '-thumbnail', 'x200', '-background', 'white', '-alpha', 'remove', image + '[0]', t])
     return t

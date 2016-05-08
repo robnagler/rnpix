@@ -1,49 +1,37 @@
 var rnpix = {
     search: function(query) {
-	var words = rnpix.tokenize(query);
-	var result = [];
-	if (!words.length) {
-	    return result
-	}
-        for (var w in words) {
-            var i = rnpix.index[word]
-	result = rnpix.searchForWords(words);
-	var res = [];
-	for (var i in result) {
-	    res.push(result[i]);
-	}
-	return res;
+	return rnpix.tokenize(query)
+            .reduce(
+                function(files, word) {
+                    if (! (word in rnpix.index.words)) {
+                        return files;
+                    }
+                    var f = rnpix.index.words[word];
+                    res = files.length ? _.intersection(files, f).toArray()
+                        : f;
+                    return res;
+                },
+                []
+            )
+            .map(
+                function(f) {
+                    return {
+                        title: rnpix.index.titles[f],
+                        link: rnpix.indexLink(f)
+                    };
+                }
+            ).toArray();
     },
 
-    imageLink: function(fileIndex):
+    imageLink: function(fileIndex) {
         return rnpix.index.links[fileIndex]
             + '/t/'
             + rnpix.index.images[fileIndex]
             + '.jpg';
-    }        
-    searchForWords: function(words) {
-	var result = []
-        _.chain(words)
-            .map(function(word) {
-                var i = rnpix.index[word];
-                if 
-	words.forEach(function(word) {
-	    if (!i) {
-                return;
-            }
-	    i.forEach(function(file) {
-		if (result[file.f]) {
-			result[file.f].weight *= file.w * word.w;
-		    } else {
-			result[file.f] = {
-			    file: rnpix.files[file.f],
-			    weight: file.w * word.w
-			};
-		    }
-		});
-	    }
-	});
-	return result;
+    },
+
+    indexLink: function(fileIndex) {
+        return rnpix.index.links[fileIndex] + '/index.html'
     },
 
     stopWords: [
@@ -60,7 +48,6 @@ var rnpix = {
             .filter(function(word) {
                 return !(word in rnpix.stopWords);
             })
-            .uniq()
-            .value();
+            .uniq();
     }
 };
