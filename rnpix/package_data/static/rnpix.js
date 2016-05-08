@@ -1,6 +1,6 @@
 var rnpix = {
     search: function(query) {
-	var words = rnpix.tokenizeString(query);
+	var words = rnpix.tokenize(query);
 	var result = [];
 	if (!words.length) {
 	    return result
@@ -15,10 +15,18 @@ var rnpix = {
 	return res;
     },
 
+    imageLink: function(fileIndex):
+        return rnpix.index.links[fileIndex]
+            + '/t/'
+            + rnpix.index.images[fileIndex]
+            + '.jpg';
+    }        
     searchForWords: function(words) {
 	var result = []
         _.chain(words)
-            .filter(
+            .map(function(word) {
+                var i = rnpix.index[word];
+                if 
 	words.forEach(function(word) {
 	    if (!i) {
                 return;
@@ -47,7 +55,7 @@ var rnpix = {
         "they", "this", "to", "was", "will", "with"
     ],
     
-    tokenizeString: function(string) {
+    tokenize: function(string) {
         return _.chain(string.toLowerCase().split(/\W+/))
             .filter(function(word) {
                 return !(word in rnpix.stopWords);

@@ -6,8 +6,11 @@ u"""?
 """
 from __future__ import absolute_import, division, print_function
 
-import re
 from pykern import pkio
+import json
+import os.path
+import py.path
+import re
 
 _DIR_RE = re.compile(r'/(\d{4})/(\d\d)-(\d\d)$')
 
@@ -26,7 +29,16 @@ _STOP_WORDS = [
 _STOP_WORDS = dict(zip(_STOP_WORDS, xrange(len(_STOP_WORDS))))
 
 def default_command():
-    files, words, images, titles = _search_and_parse()
+    res = _search_and_parse()
+    with open('rnpix-index.js', 'w') as f:
+        f.write(_json(res))
+
+
+class _JSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, set):
+            return sorted(list(obj))
+        return super(_JSONEncoder, self).default(self, obj)
 
 
 def _add_words(words, file_index, new):
@@ -36,28 +48,11 @@ def _add_words(words, file_index, new):
         words[w].add(file_index)
 
 
-def _search_and_parse():
-    files = list(pkio.walk_tree('.', file_re=r'index.txt$'))
-    files.reverse()
-    words = {}
-    images = {}
-    titles = {}
-    for f, fi in zip(files, xrange(len(files))):
-        s = _DIR_RE.search(f.dirname)
-        assert s, '{}: non-date dirname'.format(f)
-        y, m, d = s.group(1, 2, 3)
-        _add_words(words, fi, [y, y + m, y + m + d])
-        w, i, t = _index_parse(str(f), fi)
-        images[fi] = i
-        titles[fi] = '{}/{}/{}{}'.format(m, d, y, t)
-        _add_words(words, fi, w)
-    return files, words, images, titles
-
-
 def _index_parse(filename, file_index):
     image = None
     words = set()
     title = ''
+    title_done = False
     with open(filename) as f:
         for l in f:
             m = _LINE_RE.search(l)
@@ -69,13 +64,51 @@ def _index_parse(filename, file_index):
                 words.add(w)
                 if len(title) < 100:
                     title += ' ' + w
+                else:
+                    title_done = True
+            if not title_done:
+                title += ';'
     assert image, '{}: no image'.format(filename)
     return words, image, title
 
 
-def _index_parse_line(line, words):
+def _index_parse_line(line):
     for w in _DELIMITER_RE.split(line.lower()):
         if len(w) and not w in _STOP_WORDS:
             yield w
 
-def _print_index_js():
+def _json(res):
+    return 'rnpix.index=' + json.dumps(
+        res,
+        cls=_JSONEncoder,
+        separators=(',',':'),
+    ) + ';\n'
+
+
+def _search_and_parse():
+    files = list(pkio.walk_tree('.', file_re=r'index.txt$'))
+    files.reverse()
+    res = {
+        'images': [],
+        'links': [],
+        'titles': [],
+        'words': {},
+    }
+    cwd = py.path.local()
+    for f, fi in zip(files, xrange(len(files))):
+        s = _DIR_RE.search(f.dirname)
+        assert s, '{}: non-date dirname'.format(f)
+        y, m, d = s.group(1, 2, 3)
+        _add_words(res['words'], fi, [y, y + m, y + m + d])
+        w, i, t = _index_parse(str(f), fi)
+        res['links'].append(cwd.bestrelpath(py.path.local(f.dirname)))
+        res['images'].append(_thumb(i))
+        res['titles'].append('{}/{}/{}{}'.format(m, d, y, t))
+        _add_words(res['words'], fi, w)
+    return res
+
+
+def _thumb(image):
+    return re.sub(r'\.\w+$', '', image)
+
+
