@@ -9,7 +9,6 @@ var rnpix = {
                     var f = rnpix.index.words[word];
                     res = files.length ? _.intersection(files, f)
                         : f;
-                    console.log(res);
                     return res;
                 },
                 []
