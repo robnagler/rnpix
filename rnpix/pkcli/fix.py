@@ -17,7 +17,7 @@ import re
 
 _LINE_RE = re.compile(r'^([^\s:]+):?\s*(.*)')
 
-_IMAGE_RE = re.compile(r'^(.+)\.(mp4|jpg|gif|tif|pcd|png|psd|pdf|mov|jpg|thm|jpeg|avi)$', flags=re.IGNORECASE)
+_IMAGE_RE = re.compile(r'^(.+)\.(mp4|mpg|jpg|gif|tif|pcd|png|psd|pdf|mov|jpg|thm|jpeg|avi)$', flags=re.IGNORECASE)
 
 def default_command():
     """Find all dirs and try to fix"""

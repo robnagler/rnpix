@@ -46,19 +46,21 @@ figure {
 .rnpix_day figure {
   display: inline-block;
   vertical-align: top;
-  margin: 10px;
+  margin-right: 10px;
+  margin-bottom: 10px;
 }
 
 .rnpix_day figcaption {
   /* this is a fudge; assumes thumbs x150 */
   margin-top: 5px;
-  width: 400px;
+  width: 350px;
   display: block;
   caption-side: bottom;
 }
 
 .rnpix_search_widget input {
-  width: 410px;
+  width: 200px;
+  height: 24px;
 }
 
 .rnpix_search_widget figure {
