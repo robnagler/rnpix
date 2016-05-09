@@ -12,7 +12,7 @@ $(document).ready(function() {
         .on("keyup", function() {
             results.html('')
             _.chain(rnpix.search($(this).val()))
-                .first(20)
+                .first(100)
                 .each(function(e) {
                     results.append(
                         $('<a>', {href: e.link})
