@@ -7,6 +7,7 @@ u"""?
 from __future__ import absolute_import, division, print_function
 
 from pykern import pkio
+from pykern.pkdebug import pkdp
 import json
 import os.path
 import py.path
@@ -28,8 +29,10 @@ _STOP_WORDS = set((
     'they', 'this', 'to', 'was', 'will', 'with',
 )) | set(string.lowercase) | set(string.digits)
 
-def default_command():
-    res = _search_and_parse()
+def default_command(*dirs):
+    if not dirs:
+        dirs = ['.']
+    res = _search_and_parse(dirs)
     with open('rnpix-index.js', 'w') as f:
         f.write(_json(res))
 
@@ -87,8 +90,10 @@ def _json(res):
     ) + ';\n'
 
 
-def _search_and_parse():
-    files = list(pkio.walk_tree('.', file_re=r'index.txt$'))
+def _search_and_parse(dirs):
+    files = []
+    for d in dirs:
+        files.extend(list(pkio.walk_tree(d, file_re=r'index.txt$')))
     files.reverse()
     res = {
         'images': [],
@@ -112,5 +117,3 @@ def _search_and_parse():
 
 def _thumb(image):
     return re.sub(r'\.\w+$', '', image)
-
-

@@ -52,7 +52,7 @@ figure {
 .rnpix_day figcaption {
   /* this is a fudge; assumes thumbs x150 */
   margin-top: 5px;
-  width: 300px;
+  width: 400px;
   display: block;
   caption-side: bottom;
 }

@@ -77,7 +77,7 @@ def _indexed():
 def _need_to_index():
     indexed = _indexed()
     args = []
-    p = re.compile(r'\.(mp4|jpg|png|tif|gif|pcd|pdf|mov|jpg|thm|jpeg)$', flags=re.IGNORECASE)
+    p = re.compile(r'\.(mp4|jpg|png|tif|gif|pcd|psd|pdf|mov|jpg|avi|thm|jpeg)$', flags=re.IGNORECASE)
     for a in sorted(os.listdir('.'), key=str.lower):
         if a in indexed:
             continue

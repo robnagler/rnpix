@@ -100,9 +100,8 @@ def _one_dir(force):
         err('no index.txt')
         return
     body = _index_parser(lines, err, force)
-    if force or not os.path.exists(_INDEX_FILE):
-        with open(_INDEX_FILE, 'w') as f:
-            f.write(_HTML.format(title=title, body=body))
+    with open(_INDEX_FILE, 'w') as f:
+        f.write(_HTML.format(title=title, body=body))
 
 
 def _thumb(image, force):

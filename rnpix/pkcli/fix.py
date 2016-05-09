@@ -17,7 +17,7 @@ import re
 
 _LINE_RE = re.compile(r'^([^\s:]+):?\s*(.*)')
 
-_IMAGE_RE = re.compile(r'^(.+)\.(mp4|jpg|gif|tif|pcd|png|pdf|mov|jpg|thm|jpeg)$', flags=re.IGNORECASE)
+_IMAGE_RE = re.compile(r'^(.+)\.(mp4|jpg|gif|tif|pcd|png|psd|pdf|mov|jpg|thm|jpeg|avi)$', flags=re.IGNORECASE)
 
 def default_command():
     """Find all dirs and try to fix"""
@@ -38,6 +38,7 @@ def _one_dir():
         return
     images = set()
     bases = {}
+    seen = set()
     for x in glob.glob('*.*'):
         m = _IMAGE_RE.search(x)
         if m:
@@ -47,7 +48,12 @@ def _one_dir():
             bases[m.group(1)] = x
     new_lines = []
     for l in lines:
-        if l.startswith('#'):
+        if re.search(r'^#\S+\.avi', l):
+            # Fix previous avi bug
+            l = l[1:]
+        elif re.search(r'^#\d+_\d+\.jpg', l):
+            l = l[1:].replace('_', '-', 1)
+        elif l.startswith('#'):
             new_lines.append(l)
             continue
         m = _LINE_RE.search(l)
@@ -70,7 +76,13 @@ def _one_dir():
                 continue
         if i in images:
             images.remove(i)
+            seen.add(i)
         else:
+            if i in seen:
+                if t == '?':
+                    err('{}: already seen no text, skipping'.format(i))
+                    continue
+                err('{}: already seen with text'.format(i))
             err('{}: no such image: text={}'.format(i, t))
             new_lines.append('#' + l)
             continue
