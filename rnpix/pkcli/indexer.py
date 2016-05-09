@@ -27,7 +27,7 @@ _STOP_WORDS = set((
     'no', 'not', 'of', 'on', 'or', 'such',
     'that', 'the', 'their', 'then', 'there', 'these',
     'they', 'this', 'to', 'was', 'will', 'with',
-)) | set(string.lowercase) | set(string.digits)
+))
 
 def default_command(*dirs):
     if not dirs:
@@ -79,7 +79,7 @@ def _index_parse(filename, file_index):
 
 def _index_parse_line(line):
     for w in _DELIMITER_RE.split(line.lower()):
-        if len(w) and not w in _STOP_WORDS:
+        if len(w) > 1 and not w in _STOP_WORDS:
             yield w
 
 def _json(res):

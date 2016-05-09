@@ -60,7 +60,7 @@ figure {
 
 .rnpix_search_widget input {
   width: 200px;
-  height: 24px;
+  font-size: 20px;
 }
 
 .rnpix_search_widget figure {
