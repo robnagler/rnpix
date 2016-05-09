@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 u"""?
 
-:copyright: Copyright (c) 2016 RadiaSoft LLC.  All Rights Reserved.
+:copyright: Copyright (c) 2016 Robert Nagler.  All Rights Reserved.
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
 from __future__ import absolute_import, division, print_function
@@ -20,8 +20,6 @@ import subprocess
 # for f in *.jpg; do convert -resize x200 -quality 50% $f t\
 #    /$f; done
 # https://github.com/cebe/js-search
-
-_IMAGE_RE = re.compile(r'(.+)\.(mp4|jpg|png|pdf|mov|jpg|thm|jpeg)$', flags=re.IGNORECASE)
 
 _DIR_RE = re.compile(r'/(\d{4})/(\d\d)-(\d\d)$')
 
@@ -56,9 +54,9 @@ def default_command(force=False):
     if _DIR_RE.search(os.getcwd()):
         _one_dir(force)
     else:
-        dirs = list(glob.glob(_MM_DD))
+        dirs = list(glob.iglob(_MM_DD))
         if not dirs:
-            dirs = list(glob.glob(_YYYY_MM_DD))
+            dirs = list(glob.iglob(_YYYY_MM_DD))
             if not dirs:
                 pkcli.command_error('no directories matching YYYY or MM-DD')
         for d in sorted(dirs):
@@ -69,6 +67,8 @@ def default_command(force=False):
 def _index_parser(lines, err, force):
     body = ''
     for l in lines:
+        if l.startswith('#'):
+            continue
         m = _LINE_RE.search(l)
         if not m:
             if re.search(r'\S', l):

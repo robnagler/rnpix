@@ -55,6 +55,8 @@ def _index_parse(filename, file_index):
     title_done = False
     with open(filename) as f:
         for l in f:
+            if l.startswith('#'):
+                continue
             m = _LINE_RE.search(l)
             if not m:
                 raise ValueError('{}: invalid line in {}'.format(l, filename))

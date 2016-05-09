@@ -6,7 +6,7 @@ Each day directory has index.txt, which is edited by this program.
 
 https://github.com/cebe/js-search
 
-:copyright: Copyright (c) 2016 Rob Nagler.  All Rights Reserved.
+:copyright: Copyright (c) 2016 Robert Nagler.  All Rights Reserved.
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
 from __future__ import absolute_import, division, print_function
@@ -60,6 +60,8 @@ def _indexed():
             l = l.rstrip()
             if not l:
                 continue
+            if l.startswith('#'):
+                continue
             m = p.search(l)
             if not m:
                 print(l + ': invalid line')
@@ -75,7 +77,7 @@ def _indexed():
 def _need_to_index():
     indexed = _indexed()
     args = []
-    p = re.compile(r'\.(mp4|jpg|png|pdf|mov|jpg|thm|jpeg)$', flags=re.IGNORECASE)
+    p = re.compile(r'\.(mp4|jpg|png|tif|gif|pcd|pdf|mov|jpg|thm|jpeg)$', flags=re.IGNORECASE)
     for a in sorted(os.listdir('.'), key=str.lower):
         if a in indexed:
             continue
