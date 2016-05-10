@@ -1,5 +1,7 @@
 ### Photo Library Tools
 
+For a demo, visit [rnpix.github.io](https://rnpix.github.io).
+
 The photo library is organized into "day" directories of the form
 `YYYY/MM-DD/*.{jpg,mov,...}`. In each day directory, `index.txt`
 contains:
