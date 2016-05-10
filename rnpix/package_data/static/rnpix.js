@@ -38,17 +38,18 @@ var rnpix = {
 
     stopWords: [
         // default lucene http://stackoverflow.com/questions/17527741/what-is-the-default-list-of-stopwords-used-in-lucenes-stopfilter
-        "an", "and", "are", "as", "at", "be", "but", "by",
+        "a", "an", "and", "are", "as", "at", "be", "but", "by",
         "for", "if", "in", "into", "is", "it",
         "no", "not", "of", "on", "or", "such",
         "that", "the", "their", "then", "there", "these",
         "they", "this", "to", "was", "will", "with",
+
     ],
     
     tokenize: function(string) {
         return _.chain(string.toLowerCase().split(/\W+/))
             .filter(function(word) {
-                return word.length > 1 && !(word in rnpix.stopWords);
+                return word.length && !(word in rnpix.stopWords);
             })
             .uniq();
     }

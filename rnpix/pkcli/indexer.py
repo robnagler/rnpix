@@ -22,7 +22,7 @@ _DELIMITER_RE = re.compile(r'\W+')
 
 _STOP_WORDS = set((
     # default lucene http://stackoverflow.com/questions/17527741/what-is-the-default-list-of-stopwords-used-in-lucenes-stopfilter
-    'an', 'and', 'are', 'as', 'at', 'be', 'but', 'by',
+    'a', 'an', 'and', 'are', 'as', 'at', 'be', 'but', 'by',
     'for', 'if', 'in', 'into', 'is', 'it',
     'no', 'not', 'of', 'on', 'or', 'such',
     'that', 'the', 'their', 'then', 'there', 'these',
@@ -79,7 +79,7 @@ def _index_parse(filename, file_index):
 
 def _index_parse_line(line):
     for w in _DELIMITER_RE.split(line.lower()):
-        if len(w) > 1 and not w in _STOP_WORDS:
+        if len(w) and not w in _STOP_WORDS:
             yield w
 
 def _json(res):

@@ -101,7 +101,7 @@ def _one_day(args):
         if not os.path.exists(img):
             continue
         with open('index.txt', 'a') as f:
-            if re.search(r'\.(mp4|mov)$', img, flags=re.IGNORECASE):
+            if re.search(r'\.(mp4|mov|mpg|avi)$', img, flags=re.IGNORECASE):
                 subprocess.check_call(['open', '-a', 'QuickTime Player.app', img])
             else:
                 subprocess.check_call(['open', '-a', 'Preview.app', img])
