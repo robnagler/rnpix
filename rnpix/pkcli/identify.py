@@ -10,6 +10,7 @@ https://github.com/cebe/js-search
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
 from __future__ import absolute_import, division, print_function
+from rnpix import common
 import glob
 import os
 import os.path
@@ -17,12 +18,6 @@ import re
 import subprocess
 import sys
 import uuid
-
-
-IMAGE_SUFFIX = re.compile(
-    r'\.(mp4|jpg|png|tif|gif|pcd|psd|mpg|pdf|mov|jpg|avi|thm|jpeg)$',
-    flags=re.IGNORECASE,
-)
 
 
 def add_to_index(*date_dir):
@@ -92,7 +87,7 @@ def _need_to_index():
     for a in sorted(os.listdir('.'), key=str.lower):
         if a in indexed:
             continue
-        if not IMAGE_SUFFIX.search(a):
+        if not common.IMAGE_SUFFIX.search(a):
             continue
         a = _clean_name(a)
         args.append(a)
@@ -110,7 +105,7 @@ def _one_day(args):
             os.chdir(d)
         if not os.path.exists(img):
             continue
-        if re.search(r'\.(mp4|mov|mpg|avi)$', img, flags=re.IGNORECASE):
+        if common.MOVIE_SUFFIX.search(img):
             subprocess.check_call(['open', '-a', 'QuickTime Player.app', img])
         else:
             subprocess.check_call(['open', '-a', 'Preview.app', img])
