@@ -18,19 +18,31 @@ import subprocess
 import sys
 import uuid
 
-def default_command(*date_dir):
+
+IMAGE_SUFFIX = re.compile(
+    r'\.(mp4|jpg|png|tif|gif|pcd|psd|mpg|pdf|mov|jpg|avi|thm|jpeg)$',
+    flags=re.IGNORECASE,
+)
+
+
+def add_to_index(*date_dir):
     """Search in date_dir or all dirs in year
     """
     if date_dir:
         for d in date_dir:
             _one_day(date_dir)
-    else:
-        dirs = glob.glob('[0-9][0-9]-[0-9][0-9]')
-        if dirs:
-            _search_all_dirs(dirs)
-        else:
-            _one_day(_need_to_index())
+    elif _search_all_dirs(True) is None:
+        _one_day(_need_to_index())
 
+
+def need_to_index():
+    """Where to index
+    """
+    res = _search_all_dirs(False)
+    assert not res is None, \
+        'must be executed from pix/<year> directory'
+    return res
+        
 
 def _clean_name(old):
     new = re.sub(r'[^\-\.\w]+', '-', old.lower())
@@ -77,11 +89,10 @@ def _indexed():
 def _need_to_index():
     indexed = _indexed()
     args = []
-    p = re.compile(r'\.(mp4|jpg|png|tif|gif|pcd|psd|mpg|pdf|mov|jpg|avi|thm|jpeg)$', flags=re.IGNORECASE)
     for a in sorted(os.listdir('.'), key=str.lower):
         if a in indexed:
             continue
-        if not p.search(a):
+        if not IMAGE_SUFFIX.search(a):
             continue
         a = _clean_name(a)
         args.append(a)
@@ -89,9 +100,8 @@ def _need_to_index():
 
 
 def _one_day(args):
-    status = True
     if not args:
-        return status
+        return
     cwd = os.getcwd()
     for a in args:
         img = os.path.basename(a)
@@ -100,38 +110,46 @@ def _one_day(args):
             os.chdir(d)
         if not os.path.exists(img):
             continue
-        with open('index.txt', 'a') as f:
-            if re.search(r'\.(mp4|mov|mpg|avi)$', img, flags=re.IGNORECASE):
-                subprocess.check_call(['open', '-a', 'QuickTime Player.app', img])
+        if re.search(r'\.(mp4|mov|mpg|avi)$', img, flags=re.IGNORECASE):
+            subprocess.check_call(['open', '-a', 'QuickTime Player.app', img])
+        else:
+            subprocess.check_call(['open', '-a', 'Preview.app', img])
+        msg = raw_input(a + ': ')
+        if not msg:
+            status = False
+            break
+        if os.path.exists(img):
+            if msg == '!':
+                os.remove(img)
+                print(a + ': removed')
             else:
-                subprocess.check_call(['open', '-a', 'Preview.app', img])
-            msg = raw_input(a + ': ')
-            if not msg:
-                status = False
-                break
-            if os.path.exists(img):
-                if msg == '!':
-                    os.remove(img)
-                    print(a + ': removed')
-                else:
+                with open('index.txt', 'a') as f:
                     f.write(img + ' ' + msg + '\n')
-            else:
-                print(a + ': does not exist')
+        else:
+            print(a + ': does not exist')
         if d:
             os.chdir(cwd)
     try:
         os.remove('index.txt~')
     except Exception:
         pass
-    return status
+    return
 
 
-def _search_all_dirs(dirs):
+def _search_all_dirs(addToIndex):
     cwd = os.getcwd()
+    dirs = glob.glob('[0-9][0-9]-[0-9][0-9]')
+    if not dirs:
+        return None
+    res = []
     for d in dirs:
         try:
             os.chdir(d)
-            if not _one_day(_need_to_index()):
-                return
+            files = _need_to_index()
+            if files:
+                res.append(d)
+                if addToIndex:
+                    _one_day(files)
         finally:
             os.chdir(cwd)
+    return res
