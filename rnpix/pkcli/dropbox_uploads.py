@@ -49,7 +49,9 @@ def default_command(*files):
 
 @contextlib.contextmanager
 def _lock(filename):
-    lock_d = filename + '.lock'
+    # Lock directories don't work within Dropbox folders, because
+    # Dropbox uploads them and they can hang around after deleting here.
+    lock_d = '/tmp/dropbox_uploads-' + os.environ['USER']
     lock_pid = os.path.join(lock_d, 'pid')
 
     def _pid():
