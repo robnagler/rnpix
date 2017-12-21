@@ -19,16 +19,13 @@ import sys
 import time
 
 
-def default_command(*files):
+def default_command(*dirs):
     """Move files to ~/Dropbox/Photos/YYYY/MM-DD
-
-    Actually ignores the files, and instead searches
-    the directory.
 
     Setup with Automator by Run Shell Script::
 
         . ~/.bashrc
-        rnpix dropbox-uploads "$@"
+        rnpix dropbox-uploads 'directory where files are uploaded'
 
     Make sure::
 
@@ -37,9 +34,6 @@ def default_command(*files):
     Args:
         files (str): what to copy
     """
-    dirs = set()
-    for f in files:
-        dirs.add(os.path.dirname(f))
     for d in dirs:
         with _lock(d):
             for f in glob.glob(os.path.join(d, '*.*')):
