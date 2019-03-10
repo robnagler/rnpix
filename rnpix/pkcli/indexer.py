@@ -101,7 +101,7 @@ def _search_and_parse(dirs):
         'titles': [],
         'words': {},
     }
-    for f, fi in zip(files, xrange(len(files))):
+    for f, fi in zip(files, range(len(files))):
         s = _DIR_RE.search(f.dirname)
         assert s, '{}: non-date dirname'.format(f)
         root = py.path.local(s.group(1))
