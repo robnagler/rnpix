@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 import re
 
 IMAGE_SUFFIX = re.compile(
-    '\.(mp4|jpg|png|tif|gif|pcd|psd|mpg|pdf|mov|jpg|avi|thm|jpeg)$',
+    r'\.(mp4|jpg|png|tif|gif|pcd|psd|mpg|pdf|mov|jpg|avi|thm|jpeg)$',
     flags=re.IGNORECASE,
 )
 
