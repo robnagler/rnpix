@@ -110,7 +110,7 @@ def _one_day(args):
             subprocess.check_call(['open', '-a', 'QuickTime Player.app', img])
         else:
             subprocess.check_call(['open', '-a', 'Preview.app', img])
-        msg = six.input(a + ': ')
+        msg = six.raw_input(a + ': ')
         if not msg:
             status = False
             break
