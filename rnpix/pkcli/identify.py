@@ -15,6 +15,7 @@ import glob
 import os
 import os.path
 import re
+import six
 import subprocess
 import sys
 import uuid
@@ -109,7 +110,7 @@ def _one_day(args):
             subprocess.check_call(['open', '-a', 'QuickTime Player.app', img])
         else:
             subprocess.check_call(['open', '-a', 'Preview.app', img])
-        msg = raw_input(a + ': ')
+        msg = six.input(a + ': ')
         if not msg:
             status = False
             break
