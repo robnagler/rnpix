@@ -6,7 +6,7 @@ u"""Rename Camera Uploads from Dropbox
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
 from __future__ import absolute_import, division, print_function
-from pykern.pkdebug import pkdp
+from pykern.pkdebug import pkdp, pkdlog
 from rnpix import common
 import contextlib
 import datetime
@@ -55,13 +55,13 @@ def _lock(filename):
                 res = int(f.read())
         except Exception:
             pass
-        pkdp(res)
+        pkdlog(res)
         if res <= 0:
             return res
         try:
             os.kill(res, 0)
         except Exception as e:
-            pkdp(e)
+            pkdlog(e)
             if isinstance(e, OSError) and e.errno == errno.ESRCH:
                 return res
         return -1
