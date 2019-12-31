@@ -8,16 +8,21 @@ u"""Rename Camera Uploads from Dropbox
 from __future__ import absolute_import, division, print_function
 from pykern.pkdebug import pkdp, pkdlog
 import pykern.pkio
-import rnpix.common
+from rnpix import common
 import contextlib
+import datetime
 import errno
+import glob
 import os
 import os.path
+import re
+import sys
 import time
+import subprocess
 
 
-def default_command(*dirs):
-    """Move files to ~/Dropbox/Photos/YYYY/MM-DD
+def default_command():
+    """Move files 
 
     Setup with Automator by Run Shell Script::
 
@@ -31,13 +36,25 @@ def default_command(*dirs):
     Args:
         files (str): what to copy
     """
-    r = pykern.pkio.py_path('~').join('Dropbox', 'Photos')
     for d in dirs:
         with _lock(d):
-            d = pykern.pkio.py_path(d)
-            for f in pykern.pkio.sorted_glob(d.join('/*.*')):
-                if rnpix.common.IMAGE_SUFFIX.search(str(f)):
-                    rnpix.common.move_one(f, r)
+            for f in glob.glob(os.path.join(d, '*.*')):
+                if common.IMAGE_SUFFIX.search(f):
+                    _move_one(f)
+
+
+def _fix_index(d, old, new):
+    i = d.join('index.txt')
+    if not i.exists():
+        return
+    r = []
+    for l in i.read().split('\n'):
+        if len(l.strip()) <= 0:
+            continue
+        if l.startswith(old):
+            l = l.replace(old, new)
+        r.append(l)
+    i.write('\n'.join(r) + '\n')
 
 
 @contextlib.contextmanager
@@ -91,3 +108,38 @@ def _lock(filename):
         if is_locked:
             os.remove(lock_pid)
             os.rmdir(lock_d)
+
+
+def _move_one(src):
+    x = '%Y-%m-%d-%H.%M.%S'
+    t = subprocess.check_output(
+        ('exiftool', '-d', x, '-DateTimeOriginal', '-S', '-s', src),
+    ).decode().strip()
+    s = pykern.pkio.py_path(src)
+    e = s.ext
+    if e == '.jpeg':
+        e = '.jpg'
+    m = re.search(r'(20\d\d)[\D](\d\d)[\D](\d\d)', t)
+    if m:
+        d = m.group(1) + '/' + m.group(2) + '-' + m.group(3)
+    else:
+        d = datetime.datetime.fromtimestamp(s.mtime())
+        d = d.strftime('%Y/%m-%d')
+        t = d.strftime(x)
+    d = pykern.pkio.py_path('~').join('Dropbox', 'Photos', d)
+    pykern.pkio.mkdir_parent(d)
+    f = d.join(t + e)
+    if f == s:
+        print('{} already in proper form'.format(s))
+        return
+    if f.check():
+        for i in range(1, 10):
+            f = d.join('{}-{}{}'.format(t, i, e))
+            if not f.check():
+                break
+        else:
+            raise AssertionError('{}: exists'.format(f))
+    if s.dirname == f.dirname:
+        _fix_index(s.dirpath(), s.basename, f.basename)
+    s.rename(f)
+

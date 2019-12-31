@@ -5,24 +5,37 @@ u"""?
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
 from __future__ import absolute_import, division, print_function
-
-from pykern import pkio
 from pykern.pkdebug import pkdp
 import glob
 import os
 import os.path
-import shutil
 import py.path
+import pykern.pkcli
+import pykern.pkio
 import re
+import rnpix.common
+import shutil
+
 
 _LINE_RE = re.compile(r'^([^\s:]+):?\s*(.*)')
 
 _IMAGE_RE = re.compile(r'^(.+)\.(mp4|mpg|jpg|gif|tif|pcd|png|psd|pdf|mov|jpg|thm|jpeg|avi)$', flags=re.IGNORECASE)
 
-def default_command():
+
+def files(*files, dst_root=None):
+    if not files:
+        pykern.pkcli.command_error('must supply files')
+    for f in files:
+        rnpix.common.move_one(
+            pykern.pkio.py_path(f),
+            dst_root and pykern.pkio.py_path(dst_root),
+        )
+
+
+def v1():
     """Find all dirs and try to fix"""
-    for f in pkio.walk_tree('.', file_re=r'index.txt$'):
-        with pkio.save_chdir(f.dirname):
+    for f in pykern.pkio.walk_tree('.', file_re=r'index.txt$'):
+        with pykern.pkio.save_chdir(f.dirname):
             _one_dir()
     
 
