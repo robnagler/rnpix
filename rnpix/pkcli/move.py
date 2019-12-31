@@ -116,7 +116,7 @@ def _move_one(src):
         ('exiftool', '-d', x, '-DateTimeOriginal', '-S', '-s', src),
     ).decode().strip()
     s = pykern.pkio.py_path(src)
-    e = s.ext
+    e = s.ext.lower()
     if e == '.jpeg':
         e = '.jpg'
     m = re.search(r'(20\d\d)[\D](\d\d)[\D](\d\d)', t)
