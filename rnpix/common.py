@@ -24,9 +24,14 @@ MOVIE_SUFFIX = re.compile(
 
 
 def move_one(src, dst_root):
+    e = src.ext.lower()
+    if e == '.jpeg':
+        e = '.jpg'
     x = '%Y-%m-%d-%H.%M.%S'
+    # CreationDate is in timezone as is DateTimeOriginal
+    y = '-CreationDate' if e == '.mov' else '-DateTimeOriginal' 
     p = subprocess.run(
-        ('exiftool', '-d', x, '-DateTimeOriginal', '-S', '-s', src),
+        ('exiftool', '-d', x, y, '-S', '-s', src),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True,
@@ -48,9 +53,6 @@ def move_one(src, dst_root):
         pykern.pkio.mkdir_parent(d)
     else:
         d = pykern.pkio.py_path('.')
-    e = src.ext.lower()
-    if e == '.jpeg':
-        e = '.jpg'
     f = d.join(t + e)
     if f == src:
         pkdlog('ignoring same name: {}', src, f)
