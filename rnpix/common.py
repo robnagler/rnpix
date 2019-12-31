@@ -48,7 +48,7 @@ def move_one(src, dst_root):
         pykern.pkio.mkdir_parent(d)
     else:
         d = pykern.pkio.py_path('.')
-    e = src.ext
+    e = src.ext.lower()
     if e == '.jpeg':
         e = '.jpg'
     f = d.join(t + e)
