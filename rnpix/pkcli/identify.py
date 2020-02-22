@@ -148,4 +148,4 @@ def _search_all_dirs(addToIndex):
                     _one_day(files)
         finally:
             os.chdir(cwd)
-    return res
+    return sorted(res)
