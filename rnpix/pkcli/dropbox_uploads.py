@@ -21,7 +21,8 @@ def default_command(*dirs):
 
     Setup with Automator by Run Shell Script::
 
-        . ~/.bashrc
+        exec > /Users/nagler/Desktop/rnpix-dropbox-uploads.log 2>&1
+        source ~/.bashrc
         rnpix dropbox-uploads 'directory where files are uploaded'
 
     Make sure::
