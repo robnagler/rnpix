@@ -15,7 +15,7 @@ import subprocess
 _MOVIES = 'mp4|mov|mpg|avi|mts'
 
 IMAGE_SUFFIX = re.compile(
-    r'^(.+)\.(jpg|dng|png|tif|gif|pcd|psd|pdf|jpg|thm|jpeg|{})$'.format(_MOVIES),
+    r'^(.+)\.(jpg|dng|arw|png|tif|gif|pcd|psd|pdf|jpg|thm|jpeg|{})$'.format(_MOVIES),
     flags=re.IGNORECASE,
 )
 
