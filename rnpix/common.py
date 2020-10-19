@@ -12,13 +12,15 @@ import re
 import subprocess
 
 
+_MOVIES = 'mp4|mov|mpg|avi|mts'
+
 IMAGE_SUFFIX = re.compile(
-    r'\.(mp4|jpg|png|tif|gif|pcd|psd|mpg|pdf|mov|jpg|avi|thm|jpeg)$',
+    r'^(.+)\.(jpg|dng|png|tif|gif|pcd|psd|pdf|jpg|thm|jpeg|{})$'.format(_MOVIES),
     flags=re.IGNORECASE,
 )
 
 MOVIE_SUFFIX = re.compile(
-    r'\.(mp4|mov|mpg|avi)$',
+    r'^(.+)\.({})$'.format(_MOVIES),
     flags=re.IGNORECASE,
 )
 
@@ -29,7 +31,7 @@ def move_one(src, dst_root):
         e = '.jpg'
     x = '%Y-%m-%d-%H.%M.%S'
     # CreationDate is in timezone as is DateTimeOriginal
-    y = '-CreationDate' if e == '.mov' else '-DateTimeOriginal' 
+    y = '-CreationDate' if e == '.mov' else '-DateTimeOriginal'
     p = subprocess.run(
         ('exiftool', '-d', x, y, '-S', '-s', src),
         stdout=subprocess.PIPE,
@@ -72,7 +74,7 @@ def move_one(src, dst_root):
         pkdlog('mv {} {}', src.basename, f.basename)
     src.rename(f)
 
-    
+
 def _fix_index(d, old, new):
     i = d.join('index.txt')
     if not i.exists():
@@ -86,4 +88,3 @@ def _fix_index(d, old, new):
             l = l.replace(old, new)
         r.append(l)
     i.write('\n'.join(r) + '\n')
-

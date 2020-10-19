@@ -19,8 +19,6 @@ import shutil
 
 _LINE_RE = re.compile(r'^([^\s:]+):?\s*(.*)')
 
-_IMAGE_RE = re.compile(r'^(.+)\.(mp4|mpg|jpg|gif|tif|pcd|png|psd|pdf|mov|jpg|thm|jpeg|avi)$', flags=re.IGNORECASE)
-
 
 def files(*files, dst_root=None):
     if not files:
@@ -37,7 +35,7 @@ def v1():
     for f in pykern.pkio.walk_tree('.', file_re=r'index.txt$'):
         with pykern.pkio.save_chdir(f.dirname):
             _one_dir()
-    
+
 
 def _one_dir():
     d = os.getcwd()
@@ -53,7 +51,7 @@ def _one_dir():
     bases = {}
     seen = set()
     for x in glob.glob('*.*'):
-        m = _IMAGE_RE.search(x)
+        m = rnpix.common.IMAGE_SUFFIX.search(x)
         if m:
             images.add(x)
             # There may be multiple but we are just using for anything
@@ -77,7 +75,7 @@ def _one_dir():
             err('{}: blank line, skipping'.format(l))
             continue
         i, t = m.group(1, 2)
-        m = _IMAGE_RE.search(i)
+        m = rnpix.common.IMAGE_SUFFIX.search(i)
         if not m:
             if i in bases:
                 err('{}: substituting for {}'.format(i, bases[i]))
@@ -103,7 +101,7 @@ def _one_dir():
             err('{}: no text, adding "?"'.format(l))
             l = i + ' ?\n'
         new_lines.append(l)
-            
+
     if images:
         err('{}: extra images, append'.format(images))
         for i in images:
