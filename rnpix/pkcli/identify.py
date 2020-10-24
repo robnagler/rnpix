@@ -90,10 +90,10 @@ def _need_to_index():
             continue
         if not common.IMAGE_SUFFIX.search(a):
             continue
+        a = _clean_name(a)
         m = common.RAW_SUFFIX.search(a)
         if m and os.path.exists(m.group(1) + '.jpg'):
             continue
-        a = _clean_name(a)
         args.append(a)
     return args
 
