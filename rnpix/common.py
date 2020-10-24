@@ -14,8 +14,15 @@ import subprocess
 
 _MOVIES = 'mp4|mov|mpg|avi|mts'
 
+_RAW = 'dng|arw'
+
 IMAGE_SUFFIX = re.compile(
-    r'^(.+)\.(jpg|dng|arw|png|tif|gif|pcd|psd|pdf|jpg|thm|jpeg|{})$'.format(_MOVIES),
+    r'^(.+)\.(jpg|png|tif|gif|pcd|psd|pdf|jpg|thm|jpeg|{}|{})$'.format(_MOVIES, _RAW),
+    flags=re.IGNORECASE,
+)
+
+RAW_SUFFIX = re.compile(
+    r'^(.+)\.({})$'.format(_RAW),
     flags=re.IGNORECASE,
 )
 
