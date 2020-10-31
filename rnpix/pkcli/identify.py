@@ -84,18 +84,25 @@ def _indexed():
 
 def _need_to_index():
     indexed = _indexed()
-    args = []
+    res = set()
+    t = set()
     for a in sorted(os.listdir('.'), key=str.lower):
-        if a in indexed:
-            continue
         if not common.IMAGE_SUFFIX.search(a):
             continue
         a = _clean_name(a)
         m = common.RAW_SUFFIX.search(a)
         if m and os.path.exists(m.group(1) + '.jpg'):
             continue
-        args.append(a)
-    return args
+        m = common.MOVIE_SUFFIX.search(a)
+        if m:
+            x = m.group(1) + '.jpg'
+            if os.path.exists(x):
+                # don't index thumbs
+                t.add(x)
+        if a in indexed:
+            continue
+        res.add(a)
+    return sorted(res - t)
 
 
 def _one_day(args):

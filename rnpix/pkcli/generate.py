@@ -107,7 +107,10 @@ def _one_dir(force):
 def _thumb(image, force):
     """Returns larger size"""
     for size, quality in ('50', '25'), ('200', '50'):
-        t = re.sub(r'\w+$', 'jpg', os.path.join(size, image))
+        t = re.sub(r'\w+$', 'jpg', image)
+        if os.path.exists(t):
+            image = t
+        t = os.path.join(size, t)
         if force or not os.path.exists(t):
             d = pkio.mkdir_parent(py.path.local(t).dirname)
             try:
