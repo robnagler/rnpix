@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 u"""Identify photos and store in index.txt database.
 
-The directory structure of pictures is pix/yyyy/mm-dd/*.{jpg,png,...}
+The directory structure of pictures is <rnpix_root>/yyyy/mm-dd/*.{jpg,png,...}
 Each day directory has index.txt, which is edited by this program.
 
 https://github.com/cebe/js-search
@@ -36,7 +36,7 @@ def need_to_index():
     """
     res = _search_all_dirs(False)
     assert not res is None, \
-        'must be executed from pix/<year> directory'
+        'must be executed from <rnpix_root>/<year> directory'
     return res
 
 

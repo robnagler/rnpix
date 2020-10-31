@@ -11,13 +11,19 @@ import pykern.pkio
 import re
 import subprocess
 
-
 _MOVIES = 'mp4|mov|mpg|avi|mts'
 
 _RAW = 'dng|arw'
 
+_STILL = 'jpg|png|tif|gif|pcd|psd|pdf|thm|jpeg'
+
 IMAGE_SUFFIX = re.compile(
-    r'^(.+)\.(jpg|png|tif|gif|pcd|psd|pdf|jpg|thm|jpeg|{}|{})$'.format(_MOVIES, _RAW),
+    r'^(.+)\.({}|{}|{})$'.format(_STILL,_MOVIES, _RAW),
+    flags=re.IGNORECASE,
+)
+
+MOVIE_SUFFIX = re.compile(
+    r'^(.+)\.({})$'.format(_MOVIES),
     flags=re.IGNORECASE,
 )
 
@@ -26,8 +32,8 @@ RAW_SUFFIX = re.compile(
     flags=re.IGNORECASE,
 )
 
-MOVIE_SUFFIX = re.compile(
-    r'^(.+)\.({})$'.format(_MOVIES),
+STILL_SUFFIX = re.compile(
+    r'^(.+)\.({})$'.format(_STILL),
     flags=re.IGNORECASE,
 )
 

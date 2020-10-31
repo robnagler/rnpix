@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 u"""Rename Camera Uploads from Dropbox
 
-:copyright: Copyright (c) 2014-2017 Robert Nagler.  All Rights Reserved.
+:copyright: Copyright (c) 2014-2020 Robert Nagler.  All Rights Reserved.
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
 from __future__ import absolute_import, division, print_function
@@ -29,10 +29,14 @@ def default_command(*dirs):
 
         Folder Action receives files and folders added to Camera Uploads
 
+    If ``$RNPIX_ROOT`` set, will use that instead of ~/Dropbox/Photos
+
     Args:
         files (str): what to copy
     """
-    r = pykern.pkio.py_path('~').join('Dropbox', 'Photos')
+    r = pykern.pkio.py_path(
+        os.getenv('RNPIX_ROOT', '~/Dropbox/Photos'),
+    )
     for d in dirs:
         with _lock(d):
             d = pykern.pkio.py_path(d)
