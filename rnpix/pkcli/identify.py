@@ -106,6 +106,18 @@ def _need_to_index():
 
 
 def _one_day(args):
+
+    def _arw(image):
+        if not image.endswith('.arw'):
+            return image
+        p = re.sub(r'\.arw$', '.jpg', image)
+        i = subprocess.check_output(
+            ['exiftool', '-b', '-PreviewImage', image],
+        )
+        with open(p, 'wb') as f:
+            f.write(i)
+        return p
+
     if not args:
         return
     cwd = os.getcwd()
@@ -130,7 +142,7 @@ def _one_day(args):
                 print(a + ': removed')
             else:
                 with open('index.txt', 'a') as f:
-                    f.write(img + ' ' + msg + '\n')
+                    f.write(_arw(img) + ' ' + msg + '\n')
         else:
             print(a + ': does not exist')
         if d:
