@@ -75,7 +75,8 @@ def move_one(src, dst_root):
     if f.exists():
         for i in range(1, 10):
             if f.read('rb') == src.read('rb'):
-                pkdlog('ignoring duplicate contents: {} == {}', src, f)
+                pkdlog('removing dup={} keep={}', src, f)
+                src.remove(ignore_errors=True)
                 return
             f = d.join('{}-{}{}'.format(t, i, e))
             if not f.exists():
