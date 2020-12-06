@@ -43,9 +43,9 @@ def default_command(*dirs):
             d = pykern.pkio.py_path(d)
             for f in pykern.pkio.sorted_glob(d.join('/*.*')):
                 if rnpix.common.IMAGE_SUFFIX.search(str(f)):
-                    x = rnpix.common.move_one(f, r).dirname
+                    x = rnpix.common.move_one(f, r)
                     if x:
-                        t.add(x)
+                        t.add(x.dirname)
     return '\n'.join(sorted(t))
 
 
