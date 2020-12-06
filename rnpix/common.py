@@ -55,14 +55,14 @@ def move_one(src, dst_root):
     if p.returncode != 0:
         pykern.pkcli.command_error('exiftool failed: {} {}'.format(src, p.stderr))
     t = p.stdout.strip()
-    m = re.search(r'(20\d\d)[\D](\d\d)[\D](\d\d)', t)
+    m = re.search(r'((?:20|19)\d\d)[\D](\d\d)[\D](\d\d)', t)
     if m:
         d = m.group(1) + '/' + m.group(2) + '-' + m.group(3)
     else:
-        pkdlog('using mtime: {}', src)
         d = datetime.datetime.fromtimestamp(src.mtime())
         t = d.strftime(x)
         d = d.strftime('%Y/%m-%d')
+        pkdlog('use mtime: {} => {}', src, t)
     if dst_root:
         d = dst_root.join(d)
         pykern.pkio.mkdir_parent(d)
@@ -86,6 +86,8 @@ def move_one(src, dst_root):
         _fix_index(src.dirpath(), src.basename, f.basename)
         pkdlog('mv {} {}', src.basename, f.basename)
     src.rename(f)
+    pkdlog('{}', f)
+    return f
 
 
 def _fix_index(d, old, new):

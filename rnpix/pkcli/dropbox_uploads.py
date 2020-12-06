@@ -37,12 +37,16 @@ def default_command(*dirs):
     r = pykern.pkio.py_path(
         os.getenv('RNPIX_ROOT', '~/Dropbox/Photos'),
     )
+    t = set()
     for d in dirs:
         with _lock(d):
             d = pykern.pkio.py_path(d)
             for f in pykern.pkio.sorted_glob(d.join('/*.*')):
                 if rnpix.common.IMAGE_SUFFIX.search(str(f)):
-                    rnpix.common.move_one(f, r)
+                    x = rnpix.common.move_one(f, r).dirname
+                    if x:
+                        t.add(x)
+    return '\n'.join(sorted(t))
 
 
 @contextlib.contextmanager
