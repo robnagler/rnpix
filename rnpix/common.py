@@ -11,7 +11,7 @@ import pykern.pkio
 import re
 import subprocess
 
-_MOVIES = 'mp4|mov|mpg|avi|mts'
+_MOVIES = 'mp4|mov|mpg|avi|mts|m4v'
 
 _RAW = 'dng|arw'
 
@@ -72,6 +72,7 @@ def move_one(src, dst_root):
     if f == src:
         pkdlog('ignoring same name: {}', src, f)
         return
+    pkdlog('src {}', src)
     if f.exists():
         for i in range(1, 10):
             if f.read('rb') == src.read('rb'):
@@ -87,7 +88,7 @@ def move_one(src, dst_root):
         _fix_index(src.dirpath(), src.basename, f.basename)
         pkdlog('mv {} {}', src.basename, f.basename)
     src.rename(f)
-    pkdlog('{}', f)
+    pkdlog('dst {}', f)
     return f
 
 
