@@ -121,6 +121,7 @@ def _one_day(args):
     if not args:
         return
     cwd = os.getcwd()
+    simple_msg = None
     for a in args:
         img = os.path.basename(a)
         d = os.path.dirname(a)
@@ -128,14 +129,19 @@ def _one_day(args):
             os.chdir(d)
         if not os.path.exists(img):
             continue
-        if common.MOVIE_SUFFIX.search(img):
-            subprocess.check_call(['open', '-a', 'QuickTime Player.app', img])
+        if simple_msg:
+            msg = simple_msg
         else:
-            subprocess.check_call(['open', '-a', 'Preview.app', img])
-        msg = input(a + ': ')
-        if not msg:
-            status = False
-            break
+            if common.MOVIE_SUFFIX.search(img):
+                subprocess.check_call(['open', '-a', 'QuickTime Player.app', img])
+            else:
+                subprocess.check_call(['open', '-a', 'Preview.app', img])
+            msg = input(a + ': ')
+            if not msg:
+                status = False
+                break
+            if msg == '?':
+                simple_msg = msg
         if os.path.exists(img):
             if msg == '!':
                 os.remove(img)
