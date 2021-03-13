@@ -18,7 +18,7 @@ _RAW = 'dng|arw'
 _STILL = 'jpg|png|tif|gif|pcd|psd|pdf|thm|jpeg'
 
 IMAGE_SUFFIX = re.compile(
-    r'^(.+)\.({}|{}|{})$'.format(_STILL,_MOVIES, _RAW),
+    r'^(.+)\.({}|{}|{})$'.format(_STILL, _MOVIES, _RAW),
     flags=re.IGNORECASE,
 )
 
@@ -36,6 +36,9 @@ STILL_SUFFIX = re.compile(
     r'^(.+)\.({})$'.format(_STILL),
     flags=re.IGNORECASE,
 )
+
+
+THUMB_DIR = re.compile('^(?:200|50)$')
 
 
 def move_one(src, dst_root):
