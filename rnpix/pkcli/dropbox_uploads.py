@@ -29,6 +29,10 @@ def default_command(*dirs):
 
         Folder Action receives files and folders added to Camera Uploads
 
+    And check::
+
+        Finder > Camera Uploads > Right-Click > Services > Folder Actions Setup
+
     If ``$RNPIX_ROOT`` set, will use that instead of ~/Dropbox/Photos
 
     Args:
