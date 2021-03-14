@@ -5,7 +5,7 @@ u"""Common code
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
 from __future__ import absolute_import, division, print_function
-from pykern.pkdebug import pkdlog
+from pykern.pkdebug import pkdlog, pkdp
 import datetime
 import pykern.pkio
 import re
@@ -47,7 +47,7 @@ def move_one(src, dst_root):
         e = '.jpg'
     x = '%Y-%m-%d-%H.%M.%S'
     # CreationDate is in timezone as is DateTimeOriginal
-    y = '-CreationDate' if e == '.mov' else '-DateTimeOriginal'
+    y = '-createdate' if MOVIE_SUFFIX.search(src.basename) else '-DateTimeOriginal'
     p = subprocess.run(
         ('exiftool', '-d', x, y, '-S', '-s', src),
         stdout=subprocess.PIPE,
