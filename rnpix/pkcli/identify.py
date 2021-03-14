@@ -108,6 +108,10 @@ def _need_to_index():
 def _one_day(args):
 
     def _arw(image):
+        # You can view arw files by modifying the camera type:
+        # exiftool -sonymodelid="ILCE-7M2" -ext ARW
+        # but better to extract the jpg preview and not modify the
+        # camera type
         if not image.endswith('.arw'):
             return image
         p = re.sub(r'\.arw$', '.jpg', image)
@@ -129,13 +133,14 @@ def _one_day(args):
             os.chdir(d)
         if not os.path.exists(img):
             continue
+        preview = _arw(img)
         if simple_msg:
             msg = simple_msg
         else:
             if common.MOVIE_SUFFIX.search(img):
-                subprocess.check_call(['open', '-a', 'QuickTime Player.app', img])
+                subprocess.check_call(['open', '-a', 'QuickTime Player.app', preview])
             else:
-                subprocess.check_call(['open', '-a', 'Preview.app', img])
+                subprocess.check_call(['open', '-a', 'Preview.app', preview])
             msg = input(a + ': ')
             if not msg:
                 status = False
@@ -145,10 +150,12 @@ def _one_day(args):
         if os.path.exists(img):
             if msg == '!':
                 os.remove(img)
+                if preview != img:
+                    os.remove(preview)
                 print(a + ': removed')
             else:
                 with open('index.txt', 'a') as f:
-                    f.write(_arw(img) + ' ' + msg + '\n')
+                    f.write(preview + ' ' + msg + '\n')
         else:
             print(a + ': does not exist')
         if d:
