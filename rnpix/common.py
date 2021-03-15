@@ -45,25 +45,30 @@ def move_one(src, dst_root):
     e = src.ext.lower()
     if e == '.jpeg':
         e = '.jpg'
-    x = '%Y-%m-%d-%H.%M.%S'
-    # CreationDate is in timezone as is DateTimeOriginal
-    y = '-createdate' if MOVIE_SUFFIX.search(src.basename) else '-DateTimeOriginal'
-    p = subprocess.run(
-        ('exiftool', '-d', x, y, '-S', '-s', src),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        universal_newlines=True,
-    )
+    f1 = '%Y-%m-%d-%H.%M.%S'
+    f2 = '{}-{}-{}-{}.{}.{}'
+    # CreationDate is in timezone as is DateTimeOriginal but not for movies
+    z = ('-CreationDateValue', '-createdate') if MOVIE_SUFFIX.search(src.basename) else ('-DateTimeOriginal',)
     d = None
-    if p.returncode != 0:
-        pykern.pkcli.command_error('exiftool failed: {} {}'.format(src, p.stderr))
-    t = p.stdout.strip()
-    m = re.search(r'((?:20|19)\d\d)[\D](\d\d)[\D](\d\d)', t)
-    if m:
-        d = m.group(1) + '/' + m.group(2) + '-' + m.group(3)
-    else:
+    for y in z:
+        p = subprocess.run(
+            ('exiftool', '-d', f1, y, '-S', '-s', src),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+        )
+        if p.returncode != 0:
+            pykern.pkcli.command_error('exiftool failed: {} {}'.format(src, p.stderr))
+        m = re.search(r'((?:20|19)\d\d)\D(\d\d)\D(\d\d)\D(\d\d)\D(\d\d)\D(\d\d)', str(p.stdout))
+        if m:
+            # Creation Date Value is 2021:03:15 07:10:01-06:00
+            # it's not a date, just a string but it has timezone
+            t = f2.format(*m.groups())
+            d = '{}/{}-{}'.format(*m.groups())
+            break
+    if not d:
         d = datetime.datetime.fromtimestamp(src.mtime())
-        t = d.strftime(x)
+        t = d.strftime(f1)
         d = d.strftime('%Y/%m-%d')
         pkdlog('use mtime: {} => {}', src, t)
     if dst_root:
