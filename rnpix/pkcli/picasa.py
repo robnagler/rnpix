@@ -10,7 +10,36 @@ from pykern.pkdebug import pkdc, pkdlog, pkdp
 import re
 
 
-def default_command(path):
+def dedup(files):
+    import pykern.pkio
+    import os
+
+    r = os.getenv('RNPIX_ROOT')
+    assert r, 'must set $RNPIX_ROOT'
+    r = pykern.pkio.py_path(r)
+    z = r.join('picasa-remove')
+    x = set(pykern.pkio.read_text(files).split('\n'))
+    for f in sorted(x):
+        p = pykern.pkio.py_path(f)
+        if not f.check(file=True, exists=True):
+            continue
+        m = re.search(r'(.+)-\d+$', p.purebasename)
+        if m:
+            f = p.new(purebasename=m.group(1))
+            # leave <date>.jpg even if it is picasa
+            if not f.exists():
+                continue
+            f = None
+        else:
+            f = p.new(basename=p.basename.replace('.jpg', '-1.jpg'))
+            if not f.exists() or str(f) in x:
+                continue
+        t = z.join(p.relto(r))
+        print(f'mkdir -p "{t.dirname}" && mv "{p}" "{t}"')
+        if f:
+            print(f'mv "{f}" "{p}"')
+
+def find(path):
     """find images created by Google Picasa
     """
     import subprocess
@@ -20,9 +49,9 @@ def default_command(path):
     for p in _walk(path):
         if p.ext.lower() not in ('.jpg', '.jpeg'):
             continue
-        if subprocess.check_output(
-            ('exiftool', '-Creator', '-s', '-S', str(p))
-        ) == b'Picasa\n':
+        if b'Picasa' in subprocess.check_output(
+            ('exiftool', '-Creator', '-Artist', '-s', '-S', str(p))
+        ):
             print(p)
 
 def _walk(path):
