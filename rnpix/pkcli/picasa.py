@@ -31,8 +31,11 @@ def dedup(files):
                 continue
             f = None
         else:
-            f = p.new(basename=p.basename.replace('.jpg', '-1.jpg'))
-            if not f.exists() or str(f) in x:
+            for i in range(1, 9):
+                f = p.new(basename=p.basename.replace('.jpg', f'-{i}.jpg'))
+                if f.exists() and str(f) not in x:
+                    break
+            else:
                 continue
         t = z.join(p.relto(r))
         print(f'mkdir -p "{t.dirname}" && mv "{p}" "{t}"')
