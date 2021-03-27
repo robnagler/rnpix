@@ -106,28 +106,29 @@ def _one_dir(force):
 
 def _thumb(image, force):
     """Returns larger size"""
-    for size, quality in ('50', '25'), ('200', '50'):
-        t = re.sub(r'\w+$', 'jpg', image)
-        if os.path.exists(t):
-            image = t
-        t = os.path.join(size, t)
-        if force or not os.path.exists(t):
-            d = pkio.mkdir_parent(py.path.local(t).dirname)
-            try:
-                subprocess.check_call([
-                    'convert',
-                    '-thumbnail',
-                    'x' + size,
-                    '-quality',
-                    quality + '%',
-                    '-background',
-                    'white',
-                    '-alpha',
-                    'remove',
-                    image + '[0]',
-                    t,
-                ])
-            except:
-                pkdp('dir={}', d)
-                raise
+    width = '200'
+    quality = '50'
+    t = re.sub(r'\w+$', 'jpg', image)
+    if os.path.exists(t):
+        image = t
+    t = os.path.join(width, t)
+    if force or not os.path.exists(t):
+        d = pkio.mkdir_parent(py.path.local(t).dirname)
+        try:
+            subprocess.check_call([
+                'convert',
+                '-thumbnail',
+                'x' + width,
+                '-quality',
+                quality + '%',
+                '-background',
+                'white',
+                '-alpha',
+                'remove',
+                image + '[0]',
+                t,
+            ])
+        except Exception:
+            pkdlog('dir={}', d)
+            raise
     return t

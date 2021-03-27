@@ -27,7 +27,7 @@ var rnpix = {
 
     image: function(fileIndex) {
         return rnpix.index.links[fileIndex]
-            + '/50/'
+            + '/200/'
             + rnpix.index.images[fileIndex]
             + '.jpg';
     },
@@ -45,7 +45,7 @@ var rnpix = {
         "they", "this", "to", "was", "will", "with",
 
     ],
-    
+
     tokenize: function(string) {
         return _.chain(string.toLowerCase().split(/\W+/))
             .filter(function(word) {

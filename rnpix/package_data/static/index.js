@@ -20,7 +20,7 @@ $(document).ready(function() {
                                 $('<figure>')
                                     .append(
                                         $('<span>', {class: 'rnpix_image'})
-                                            .append($('<img>', {src: e.image})))
+                                            .append($('<img>', {src: e.image, width: 100})))
                                     .append($('<figcaption>', {html: _.escape(e.title)}))
                             )
                     );
