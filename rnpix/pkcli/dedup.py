@@ -10,7 +10,7 @@ from pykern.pkdebug import pkdc, pkdlog, pkdp
 import re
 
 
-def do(path, nowrite=False, overwrite=False):
+def find(path, nowrite=False, overwrite=False):
     """deduplicate images using $RNPIX_ROOT/dedup.db
     """
     import pykern.pkio
