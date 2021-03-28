@@ -10,7 +10,7 @@ from pykern.pkdebug import pkdc, pkdlog, pkdp
 import re
 
 
-def default_command(path, nowrite=False, overwrite=False):
+def do(path, nowrite=False, overwrite=False):
     """deduplicate images using $RNPIX_ROOT/dedup.db
     """
     import pykern.pkio
@@ -44,6 +44,25 @@ def default_command(path, nowrite=False, overwrite=False):
                 m[s] = str(p).encode()
 
 
+def not_in_db(path):
+    """deduplicate images using $RNPIX_ROOT/dedup.db
+    """
+    import pykern.pkio
+    import dbm.ndbm
+    import os
+
+    r = os.getenv('RNPIX_ROOT')
+    assert r, 'must set $RNPIX_ROOT'
+    with dbm.ndbm.open(
+        str(pykern.pkio.py_path(r).join('dedup')),
+        'r',
+    ) as m:
+        v = set([m[k] for k in m.keys()])
+    for p in _walk(path, print_cd=False):
+        if str(p).encode() not in v:
+            print(p)
+
+
 def _signature(path):
     import hashlib
     import subprocess
@@ -53,7 +72,7 @@ def _signature(path):
     return hashlib.md5(path.read_binary()).digest()
 
 
-def _walk(path):
+def _walk(path, print_cd=True):
     import rnpix.common
     import pykern.pkio
 
@@ -65,7 +84,7 @@ def _walk(path):
             or not rnpix.common.IMAGE_SUFFIX.search(p.basename)
         ):
             continue
-        if c != p.dirname:
+        if print_cd and c != p.dirname:
             c = p.dirname
             print(f'# cd {c}')
         yield p
