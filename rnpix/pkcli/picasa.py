@@ -7,48 +7,63 @@ u"""deduplicate
 from __future__ import absolute_import, division, print_function
 from pykern.pkcollections import PKDict
 from pykern.pkdebug import pkdc, pkdlog, pkdp
+import os
+import pykern.pkio
 import re
+import rnpix.common
+import subprocess
+import sys
+import time
 
 
-def dedup(files):
-    import pykern.pkio
-    import os
-
+def dedup(files, keep):
     r = os.getenv('RNPIX_ROOT')
     assert r, 'must set $RNPIX_ROOT'
     r = pykern.pkio.py_path(r)
-    z = r.join('picasa-remove')
-    x = set(pykern.pkio.read_text(files).split('\n'))
-    for f in sorted(x):
-        p = pykern.pkio.py_path(f)
-        if not f.check(file=True, exists=True):
+    a = _split_file(files)
+    k = _split_file(keep)
+    print(
+f'''#!/bin/bash
+set -euo pipefail
+export RNPIX_ROOT='{r}'
+''' + '''
+_mv() {
+    local p=$1
+    local f=${2:-}
+    local t=$RNPIX_ROOT-trash${p#$RNPIX_ROOT}
+    mkdir -p "$(dirname "$t")"
+    mv "$p" "$t"
+    if [[ $f ]]; then
+        mv "$f" "$p"
+    fi
+}'''
+    )
+    for p in sorted(a):
+        if not p.check(file=True, exists=True) or p in k:
             continue
-        m = re.search(r'(.+)-\d+$', p.purebasename)
-        if m:
-            f = p.new(purebasename=m.group(1))
-            # leave <date>.jpg even if it is picasa
-            if not f.exists():
-                continue
-            f = None
-        else:
-            for i in range(1, 9):
-                f = p.new(basename=p.basename.replace('.jpg', f'-{i}.jpg'))
-                if f.exists() and str(f) not in x:
-                    break
+        f = ''
+        if not _remove_original(p, a):
+            m = re.search(r'(.+)-\d+$', p.purebasename)
+            if m:
+                f = p.new(purebasename=m.group(1))
+                # leave <date>.jpg even if it is picasa
+                if not f.exists():
+                    continue
+                f = ''
             else:
-                continue
-        t = z.join(p.relto(r))
-        print(f'mkdir -p "{t.dirname}" && mv "{p}" "{t}"')
-        if f:
-            print(f'mv "{f}" "{p}"')
+                for i in range(1, 9):
+                    f = p.new(basename=p.basename.replace('.jpg', f'-{i}.jpg'))
+                    if f.exists() and str(f) not in a:
+                        break
+                else:
+                    # no originals so should not get here
+                    raise AssertionError(f'no originals {p}')
+        print(f"_mv '{p}' '{f}'")
+
 
 def find(path):
     """find images created by Google Picasa
     """
-    import subprocess
-    import pykern.pkio
-    import os
-
     for p in _walk(path):
         if p.ext.lower() not in ('.jpg', '.jpeg'):
             continue
@@ -57,12 +72,28 @@ def find(path):
         ):
             print(p)
 
-def _walk(path):
-    import rnpix.common
-    import pykern.pkio
-    import sys
-    import time
 
+def _remove_original(path, all_picasa):
+    b = path.purebasename
+    m = re.search(r'(.+)-\d+$', b)
+    if m:
+        b = m.group(1)
+    p = path.new(purebasename=b + '*')
+    x = set(pykern.pkio.sorted_glob(p))
+    # "keep" is this set so first print this set to see which
+    # originals to keep and remove, then run again with keep
+    return not x - all_picasa
+
+
+def _split_file(path):
+    return set([
+        pykern.pkio.py_path(f) for f in re.split(
+            r'\s*\n\s*',
+            pykern.pkio.read_text(path),
+        ) if f
+    ])
+
+def _walk(path):
     c = ''
     start = None # '2008-07-22'
     for p in pykern.pkio.walk_tree(path):
