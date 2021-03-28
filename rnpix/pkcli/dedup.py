@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 from pykern.pkcollections import PKDict
 from pykern.pkdebug import pkdc, pkdlog, pkdp
 import re
-
+import time
 
 def find(path, nowrite=False, overwrite=False):
     """deduplicate images using $RNPIX_ROOT/dedup.db
@@ -20,11 +20,16 @@ def find(path, nowrite=False, overwrite=False):
 
     r = os.getenv('RNPIX_ROOT')
     assert r, 'must set $RNPIX_ROOT'
+    i = 0
     with dbm.ndbm.open(
         str(pykern.pkio.py_path(r).join('dedup')),
         'c',
     ) as m:
         for p in _walk(path):
+            i += 1
+            if i % 10 == 0:
+                print('#sleep 2')
+                time.sleep(2)
             s = _signature(p)
             if s in m and not overwrite:
                 o = pykern.pkio.py_path(m[s].decode())
@@ -39,8 +44,9 @@ def find(path, nowrite=False, overwrite=False):
                     m[s] = str(p).encode()
                     p = o
                 x = f'"{p}"' if "'" in str(p) else f"'{p}'"
-                print(f'# {m[s]}\nrm {x}')
+                print(f'#OLD {m[s].decode()}\nrm {x}')
             elif not nowrite:
+                print(f'#NEW {p}')
                 m[s] = str(p).encode()
 
 
@@ -85,6 +91,6 @@ def _walk(path, print_cd=True):
         ):
             continue
         if print_cd and c != p.dirname:
+            print(f'#CD {p.dirname}')
             c = p.dirname
-            print(f'# cd {c}')
         yield p
