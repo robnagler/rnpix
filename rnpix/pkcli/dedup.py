@@ -10,7 +10,7 @@ from pykern.pkdebug import pkdc, pkdlog, pkdp
 import re
 import time
 
-def find(path, nowrite=False, overwrite=False):
+def find(path, nowrite=False, overwrite=False, skip=''):
     """deduplicate images using $RNPIX_ROOT/dedup.db
     """
     import pykern.pkio
@@ -21,16 +21,22 @@ def find(path, nowrite=False, overwrite=False):
     r = os.getenv('RNPIX_ROOT')
     assert r, 'must set $RNPIX_ROOT'
     i = 0
+    if skip:
+        skip = pykern.pkio.py_path(skip)
     with dbm.ndbm.open(
         str(pykern.pkio.py_path(r).join('dedup')),
         'c',
     ) as m:
         for p in _walk(path):
+            if skip:
+                if p == skip:
+                    skip = None
+                continue
             i += 1
             if i % 10 == 0:
-                print('#sleep 2')
+                print('#sleep 3')
                 time.sleep(2)
-            s = _signature(p)
+            s, p = _signature(p)
             if s in m and not overwrite:
                 o = pykern.pkio.py_path(m[s].decode())
                 if o == p:
@@ -45,9 +51,10 @@ def find(path, nowrite=False, overwrite=False):
                     p = o
                 x = f'"{p}"' if "'" in str(p) else f"'{p}'"
                 print(f'#OLD {m[s].decode()}\nrm {x}')
-            elif not nowrite:
+            else:
                 print(f'#NEW {p}')
-                m[s] = str(p).encode()
+                if not nowrite:
+                    m[s] = str(p).encode()
 
 
 def not_in_db(path):
@@ -74,8 +81,17 @@ def _signature(path):
     import subprocess
 
     if path.ext.lower() in ('.jpg', '.jpeg'):
-        return subprocess.check_output(('identify', '-format', '%#', str(path)))
-    return hashlib.md5(path.read_binary()).digest()
+        try:
+            return (subprocess.check_output(('identify', '-format', '%#', str(path))), path)
+        except subprocess.CalledProcessError:
+            # weird thing: bunch of JPG files that are quicktime movies
+            if b'QuickTime movie' not in subprocess.check_output(('file', str(path))):
+                raise
+            n = path.new(ext='.mov')
+            assert not n.exists()
+            path.rename(n)
+            path = n
+    return (hashlib.md5(path.read_binary()).digest(), path)
 
 
 def _walk(path, print_cd=True):
