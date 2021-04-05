@@ -29,12 +29,15 @@ export RNPIX_ROOT='{r}'
 ''' + '''
 _mv() {
     local p=$1
-    local f=${2:-}
+    local o=${2:-}
+    if [[ $o && ! -e $o || -e $p ]]; then
+        return
+    fi
     local t=$RNPIX_ROOT-trash${p#$RNPIX_ROOT}
     mkdir -p "$(dirname "$t")"
     mv "$p" "$t"
-    if [[ $f ]]; then
-        mv "$f" "$p"
+    if [[ $o ]]; then
+        mv "$o" "$p"
     fi
 }'''
     )
@@ -42,22 +45,18 @@ _mv() {
         if not p.check(file=True, exists=True) or p in k:
             continue
         f = ''
-        if not _remove_original(p, a):
-            m = re.search(r'(.+)-\d+$', p.purebasename)
-            if m:
-                f = p.new(purebasename=m.group(1))
-                # leave <date>.jpg even if it is picasa
-                if not f.exists():
-                    continue
-                f = ''
+        o = _originals(p, a)
+        if not o:
+            # no originals
+            continue
+        if not re.search(r'(.+)-\d+$', p.purebasename):
+            for i in range(1, 9):
+                f = p.new(basename=p.basename.replace('.jpg', f'-{i}.jpg'))
+                if f in o:
+                    break
             else:
-                for i in range(1, 9):
-                    f = p.new(basename=p.basename.replace('.jpg', f'-{i}.jpg'))
-                    if f.exists() and str(f) not in a:
-                        break
-                else:
-                    # no originals so should not get here
-                    raise AssertionError(f'no originals {p}')
+                # no originals so should not get here
+                raise AssertionError(f'no originals {p}')
         print(f"_mv '{p}' '{f}'")
 
 
@@ -68,22 +67,19 @@ def find(path):
         if p.ext.lower() not in ('.jpg', '.jpeg'):
             continue
         x = subprocess.check_output(
-            ('exiftool', '-Creator', '-Artist', '-s', '-S', str(p))
+            ('exiftool', '-Creator', '-Artist', '-Orientation', str(p))
         )
         if b'Picasa' in x and 'Orientation' not in x:
             print(p)
 
 
-def _remove_original(path, all_picasa):
+def _originals(path, all_picasa):
     b = path.purebasename
     m = re.search(r'(.+)-\d+$', b)
     if m:
         b = m.group(1)
     p = path.new(purebasename=b + '*')
-    x = set(pykern.pkio.sorted_glob(p))
-    # "keep" is this set so first print this set to see which
-    # originals to keep and remove, then run again with keep
-    return not x - all_picasa
+    return set(pykern.pkio.sorted_glob(p)) - all_picasa
 
 
 def _split_file(path):
