@@ -67,9 +67,10 @@ def find(path):
     for p in _walk(path):
         if p.ext.lower() not in ('.jpg', '.jpeg'):
             continue
-        if b'Picasa' in subprocess.check_output(
+        x = subprocess.check_output(
             ('exiftool', '-Creator', '-Artist', '-s', '-S', str(p))
-        ):
+        )
+        if b'Picasa' in x and 'Orientation' not in x:
             print(p)
 
 
