@@ -15,7 +15,7 @@ _MOVIES = 'mp4|mov|mpg|avi|mts|m4v'
 
 _RAW = 'dng|arw'
 
-_STILL = 'jpg|png|tif|gif|pcd|psd|pdf|thm|jpeg'
+_STILL = 'jpg|heic|png|tif|gif|pcd|psd|pdf|thm|jpeg'
 
 IMAGE_SUFFIX = re.compile(
     r'^(.+)\.({}|{}|{})$'.format(_STILL, _MOVIES, _RAW),
