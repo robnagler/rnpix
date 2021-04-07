@@ -23,7 +23,7 @@ def default_command(*dirs):
 
         exec > /Users/nagler/Desktop/rnpix-dropbox-uploads.log 2>&1
         source ~/.bashrc
-        rnpix dropbox-uploads 'directory where files are uploaded'
+        RNPIX_ROOT=~/Dropbox/Photos rnpix dropbox-uploads ~/Dropbox/Camera\ Uploads
 
     Make sure::
 
@@ -33,14 +33,14 @@ def default_command(*dirs):
 
         Finder > Camera Uploads > Right-Click > Services > Folder Actions Setup
 
-    If ``$RNPIX_ROOT`` set, will use that instead of ~/Dropbox/Photos
+    ``$RNPIX_ROOT`` must be set.
 
     Args:
-        files (str): what to copy
+        dirs (str): driectories to copy (not recursive)
     """
-    r = pykern.pkio.py_path(
-        os.getenv('RNPIX_ROOT', '~/Dropbox/Photos'),
-    )
+    r = os.getenv('RNPIX_ROOT')
+    assert r, 'must set $RNPIX_ROOT'
+    r = pykern.pkio.py_path(r)
     t = set()
     for d in dirs:
         with _lock(d):
