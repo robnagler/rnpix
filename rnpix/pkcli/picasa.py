@@ -17,9 +17,7 @@ import time
 
 
 def dedup(files, keep):
-    r = os.getenv('RNPIX_ROOT')
-    assert r, 'must set $RNPIX_ROOT'
-    r = pykern.pkio.py_path(r)
+    r = rnpix.common.root()
     a = _split_file(files)
     k = _split_file(keep)
     print(

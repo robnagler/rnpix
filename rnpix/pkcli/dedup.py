@@ -7,19 +7,20 @@ u"""deduplicate
 from __future__ import absolute_import, division, print_function
 from pykern.pkcollections import PKDict
 from pykern.pkdebug import pkdc, pkdlog, pkdp
+import dbm.ndbm
+import hashlib
+import os
+import pykern.pkio
 import re
+import rnpix.common
+import subprocess
 import time
+
 
 def find(path, nowrite=False, overwrite=False, skip=''):
     """deduplicate images using $RNPIX_ROOT/dedup.db
     """
-    import pykern.pkio
-    import dbm.ndbm
-    import os
-    import subprocess
-
-    r = os.getenv('RNPIX_ROOT')
-    assert r, 'must set $RNPIX_ROOT'
+    r = rnpix.common.root()
     i = 0
     if skip:
         skip = pykern.pkio.py_path(skip)
@@ -60,12 +61,7 @@ def find(path, nowrite=False, overwrite=False, skip=''):
 def not_in_db(path):
     """deduplicate images using $RNPIX_ROOT/dedup.db
     """
-    import pykern.pkio
-    import dbm.ndbm
-    import os
-
-    r = os.getenv('RNPIX_ROOT')
-    assert r, 'must set $RNPIX_ROOT'
+    r = rnpix.common.root()
     with dbm.ndbm.open(
         str(pykern.pkio.py_path(r).join('dedup')),
         'r',
@@ -77,9 +73,6 @@ def not_in_db(path):
 
 
 def _signature(path):
-    import hashlib
-    import subprocess
-
     if path.ext.lower() in ('.jpg', '.jpeg'):
         try:
             return (subprocess.check_output(('identify', '-format', '%#', str(path))), path)
@@ -95,9 +88,6 @@ def _signature(path):
 
 
 def _walk(path, print_cd=True):
-    import rnpix.common
-    import pykern.pkio
-
     c = ''
     for p in pykern.pkio.walk_tree(path):
         if (

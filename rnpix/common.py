@@ -100,6 +100,12 @@ def move_one(src, dst_root):
     return f
 
 
+def root():
+    r = os.getenv('RNPIX_ROOT')
+    assert r, 'must set $RNPIX_ROOT'
+    return pykern.pkio.py_path(r)
+
+
 def _fix_index(d, old, new):
     i = d.join('index.txt')
     if not i.exists():

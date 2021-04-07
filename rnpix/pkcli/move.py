@@ -38,9 +38,7 @@ def default_command(*dirs):
     Args:
         dirs (str): driectories to copy (not recursive)
     """
-    r = os.getenv('RNPIX_ROOT')
-    assert r, 'must set $RNPIX_ROOT'
-    r = pykern.pkio.py_path(r)
+    r = rnpix.common.root()
     t = set()
     for d in dirs:
         with _lock(d):
