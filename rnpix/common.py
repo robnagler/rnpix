@@ -6,10 +6,16 @@ u"""Common code
 """
 from __future__ import absolute_import, division, print_function
 from pykern.pkdebug import pkdlog, pkdp
+import contextlib
 import datetime
+import errno
+import os
+import os.path
 import pykern.pkio
 import re
 import subprocess
+import time
+
 
 _MOVIES = 'mp4|mov|mpg|avi|mts|m4v'
 
@@ -39,6 +45,59 @@ STILL_SUFFIX = re.compile(
 
 
 THUMB_DIR = re.compile('^(?:200|50)$')
+
+
+@contextlib.contextmanager
+def user_lock():
+    # Lock directories don't work within Dropbox folders, because
+    # Dropbox uploads them and they can hang around after deleting here.
+    lock_d = '/tmp/rnpix-lock-' + os.environ['USER']
+    lock_pid = os.path.join(lock_d, 'pid')
+
+    def _pid():
+        res = -1
+        try:
+            with open(lock_pid) as f:
+                res = int(f.read())
+        except Exception:
+            pass
+        pkdlog(res)
+        if res <= 0:
+            return res
+        try:
+            os.kill(res, 0)
+        except Exception as e:
+            pkdlog(e)
+            if isinstance(e, OSError) and e.errno == errno.ESRCH:
+                return res
+        return -1
+
+    is_locked = False
+    try:
+        for i in range(5):
+            try:
+                os.mkdir(lock_d)
+                is_locked = True
+                with open(lock_pid, 'w') as f:
+                    f.write(str(os.getpid()))
+                break
+            except OSError as e:
+                if e.errno != errno.EEXIST:
+                    raise
+                pid = _pid()
+                if pid <= 0:
+                    time.sleep(.4)
+                    continue
+                if pid == _pid():
+                    os.remove(lock_pid)
+                    os.rmdir(lock_d)
+        else:
+            raise ValueError('{}: unable to create lock'.format(lock_d))
+        yield lock_d
+    finally:
+        if is_locked:
+            os.remove(lock_pid)
+            os.rmdir(lock_d)
 
 
 def move_one(src, dst_root):
