@@ -48,7 +48,7 @@ def move_one(src, dst_root):
     f1 = '%Y-%m-%d-%H.%M.%S'
     f2 = '{}-{}-{}-{}.{}.{}'
     # CreationDate is in timezone as is DateTimeOriginal but not for movies
-    z = ('-CreationDateValue', '-createdate') if MOVIE_SUFFIX.search(src.basename) else ('-DateTimeOriginal',)
+    z = ('-CreationDate', '-CreationDateValue', '-createdate') if MOVIE_SUFFIX.search(src.basename) else ('-DateTimeOriginal',)
     d = None
     for y in z:
         p = subprocess.run(
