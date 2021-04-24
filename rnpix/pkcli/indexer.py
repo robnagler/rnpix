@@ -93,7 +93,7 @@ def _json(res):
 def _search_and_parse(dirs):
     files = []
     for d in dirs:
-        files.extend(list(pkio.walk_tree(d, file_re=r'index.txt$')))
+        files.extend(list(pkio.walk_tree(d, file_re=r'(?:^|/)index.txt$')))
     files.reverse()
     res = {
         'images': [],
