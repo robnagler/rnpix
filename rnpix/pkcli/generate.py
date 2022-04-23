@@ -9,8 +9,8 @@ from __future__ import absolute_import, division, print_function
 from pykern import pkcli
 from pykern import pkio
 from pykern.pkdebug import pkdp
-import cgi
 import glob
+import html
 import os
 import os.path
 import py.path
@@ -78,7 +78,7 @@ def _index_parser(lines, err, force):
         body += _IMG_HTML.format(
             image=i,
             thumb=_thumb(i, force),
-            caption=cgi.escape(m.group(2)),
+            caption=html.escape(m.group(2)),
         )
     return body
 
