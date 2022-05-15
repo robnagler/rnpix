@@ -92,6 +92,7 @@ def _need_to_index():
         a = _clean_name(a)
         m = common.RAW_SUFFIX.search(a)
         if m and os.path.exists(m.group(1) + '.jpg'):
+            # pcd or arw with a jpg preview already there
             continue
         m = common.MOVIE_SUFFIX.search(a)
         if m:
@@ -106,21 +107,36 @@ def _need_to_index():
 
 
 def _one_day(args):
+    """Prompts for index file update
 
-    def _arw(image):
-        # You can view arw files by modifying the camera type:
-        # exiftool -sonymodelid="ILCE-7M2" -ext ARW
-        # but better to extract the jpg preview and not modify the
-        # camera type
-        if not image.endswith('.arw'):
-            return image
-        p = re.sub(r'\.arw$', '.jpg', image)
-        i = subprocess.check_output(
-            ['exiftool', '-b', '-PreviewImage', image],
-        )
-        with open(p, 'wb') as f:
-            f.write(i)
-        return p
+    `_need_to_index` has already filtered jpg preferred over other
+    formats, that is, if there is a duplicate name, it will list the
+    jpg, not the arw, pcd, etc. in the index.
+
+    Args:
+        args (list): files to index
+
+    """
+    def _extract_jpg(image):
+        for e, s in (
+            # You can view arw files by modifying the camera type:
+            # exiftool -sonymodelid="ILCE-7M2" -ext ARW
+            # but better to extract the jpg preview and not modify the
+            # camera type
+            ('arw', ['exiftool', '-b', '-PreviewImage', image]),
+            # Suffix [5] produces an image 3072 by 2048 ("16 Base")
+            ('pcd', ['convert', image + '[5]']),
+        ):
+            if not image.endswith('.' + e):
+                continue
+            p = re.sub(f'\\.{e}$', '.jpg', image)
+            if e == 'pcd':
+                s.append(p)
+            i = subprocess.check_output(s)
+            with open(p, 'wb') as f:
+                f.write(i)
+            return p
+        return image
 
     if not args:
         return
@@ -133,12 +149,12 @@ def _one_day(args):
             os.chdir(d)
         if not os.path.exists(img):
             continue
-        preview = _arw(img)
+        preview = _extract_jpg(img)
         if simple_msg:
             msg = simple_msg
         else:
             if common.MOVIE_SUFFIX.search(img):
-                subprocess.check_call(['open', '-a', 'QuickTime Player.app', preview])
+                subprocess.check_call(['open', '-a', 'QuickTime Player.app', img])
             else:
                 subprocess.check_call(['open', '-a', 'Preview.app', preview])
             msg = input(a + ': ')
