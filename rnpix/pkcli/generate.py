@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 
 from pykern import pkcli
 from pykern import pkio
-from pykern.pkdebug import pkdp
+from pykern.pkdebug import pkdp, pkdlog
 import glob
 import html
 import os
