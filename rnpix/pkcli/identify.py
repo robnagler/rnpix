@@ -78,6 +78,10 @@ def _indexed():
             if not os.path.exists(t):
                 print(t + ': indexed file does not exist')
                 continue
+            x = l.split(' ')
+            if len(x) == 2 and x[1] == '?':
+                # Unidentified
+                continue
             res[t] = 1
     return res
 
@@ -138,6 +142,21 @@ def _one_day(args):
             return p
         return image
 
+    def _update_index(image, msg):
+        r = []
+        m = f'{image} {msg}\n'
+        with open('index.txt', 'r') as f:
+            p = re.compile(r'^[^\s:]+')
+            for l in f:
+                if l.startswith(image):
+                    # preserve order
+                    r.append(m)
+                    m = ''
+                else:
+                    r.append(l)
+        with open('index.txt', 'w') as f:
+            f.write(''.join(r) + m)
+
     if not args:
         return
     cwd = os.getcwd()
@@ -170,8 +189,7 @@ def _one_day(args):
                     os.remove(preview)
                 print(a + ': removed')
             else:
-                with open('index.txt', 'a') as f:
-                    f.write(preview + ' ' + msg + '\n')
+                _update_index(preview, msg)
         else:
             print(a + ': does not exist')
         if d:
