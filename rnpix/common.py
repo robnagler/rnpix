@@ -19,12 +19,12 @@ import time
 
 _MOVIES = 'mp4|mov|mpg|avi|mts|m4v'
 
-_RAW = 'dng|arw'
+_STILL_TO_JPG = 'dng|pcd|arw'
 
-_STILL = 'jpg|heic|png|tif|gif|pcd|psd|pdf|thm|jpeg'
+_STILL = 'jpg|heic|png|tif|gif|psd|pdf|thm|jpeg'
 
 IMAGE_SUFFIX = re.compile(
-    r'^(.+)\.({}|{}|{})$'.format(_STILL, _MOVIES, _RAW),
+    r'^(.+)\.({}|{}|{})$'.format(_STILL, _MOVIES, _STILL_TO_JPG),
     flags=re.IGNORECASE,
 )
 
@@ -33,8 +33,8 @@ MOVIE_SUFFIX = re.compile(
     flags=re.IGNORECASE,
 )
 
-RAW_SUFFIX = re.compile(
-    r'^(.+)\.({})$'.format(_RAW),
+STILL_TO_JPG_SUFFIX = re.compile(
+    r'^(.+)\.({})$'.format(_STILL_TO_JPG),
     flags=re.IGNORECASE,
 )
 
