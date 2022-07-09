@@ -11,6 +11,7 @@ https://github.com/cebe/js-search
 """
 from __future__ import absolute_import, division, print_function
 from rnpix import common
+from pykern.pkdebug import pkdp
 import glob
 import os
 import os.path
@@ -94,7 +95,7 @@ def _need_to_index():
         if not common.IMAGE_SUFFIX.search(a):
             continue
         a = _clean_name(a)
-        m = common.RAW_SUFFIX.search(a)
+        m = common.STILL_TO_JPG_SUFFIX.search(a)
         if m and os.path.exists(m.group(1) + '.jpg'):
             # pcd or arw with a jpg preview already there
             continue
@@ -122,6 +123,8 @@ def _one_day(args):
 
     """
     def _extract_jpg(image):
+        pkdp(image)
+
         for e, s in (
             # You can view arw files by modifying the camera type:
             # exiftool -sonymodelid="ILCE-7M2" -ext ARW
@@ -135,10 +138,11 @@ def _one_day(args):
                 continue
             p = re.sub(f'\\.{e}$', '.jpg', image)
             if e == 'pcd':
-                s.append(p)
-            i = subprocess.check_output(s)
-            with open(p, 'wb') as f:
-                f.write(i)
+                subprocess.check_output(s + [p])
+            else:
+                i = subprocess.check_output(s)
+                with open(p, 'wb') as f:
+                    f.write(i)
             return p
         return image
 
