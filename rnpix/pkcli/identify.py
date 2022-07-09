@@ -145,15 +145,16 @@ def _one_day(args):
     def _update_index(image, msg):
         r = []
         m = f'{image} {msg}\n'
-        with open('index.txt', 'r') as f:
-            p = re.compile(r'^[^\s:]+')
-            for l in f:
-                if l.startswith(image):
-                    # preserve order
-                    r.append(m)
-                    m = ''
-                else:
-                    r.append(l)
+        if os.path.exists('index.txt'):
+            with open('index.txt', 'r') as f:
+                p = re.compile(r'^[^\s:]+')
+                for l in f:
+                    if l.startswith(image):
+                        # preserve order
+                        r.append(m)
+                        m = ''
+                    else:
+                        r.append(l)
         with open('index.txt', 'w') as f:
             f.write(''.join(r) + m)
 
