@@ -123,8 +123,6 @@ def _one_day(args):
 
     """
     def _extract_jpg(image):
-        pkdp(image)
-
         for e, s in (
             # You can view arw files by modifying the camera type:
             # exiftool -sonymodelid="ILCE-7M2" -ext ARW
