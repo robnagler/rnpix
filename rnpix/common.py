@@ -17,7 +17,7 @@ import subprocess
 import time
 
 
-_MOVIES = 'mp4|mov|mpg|avi|mts|m4v'
+_MOVIES = '3gp|mp4|mov|mpg|avi|mts|m4v'
 
 _NEED_JPG = 'dng|pcd|arw|skp'
 
