@@ -19,30 +19,24 @@ import time
 
 _MOVIES = 'mp4|mov|mpg|avi|mts|m4v'
 
-_STILL_TO_JPG = 'dng|pcd|arw'
+_NEED_JPG = 'dng|pcd|arw|skp'
 
 _STILL = 'jpg|heic|png|tif|gif|psd|pdf|thm|jpeg'
 
 IMAGE_SUFFIX = re.compile(
-    r'^(.+)\.({}|{}|{})$'.format(_STILL, _MOVIES, _STILL_TO_JPG),
+    r'^(.+)\.({}|{}|{})$'.format(_STILL, _MOVIES, _NEED_JPG),
     flags=re.IGNORECASE,
 )
 
-MOVIE_SUFFIX = re.compile(
+MOVIE = re.compile(
     r'^(.+)\.({})$'.format(_MOVIES),
     flags=re.IGNORECASE,
 )
 
-STILL_TO_JPG_SUFFIX = re.compile(
-    r'^(.+)\.({})$'.format(_STILL_TO_JPG),
+NEED_PREVIEW = re.compile(
+    r'^(.+)\.({})$'.format(_NEED_JPG + '|' + _MOVIES),
     flags=re.IGNORECASE,
 )
-
-STILL_SUFFIX = re.compile(
-    r'^(.+)\.({})$'.format(_STILL),
-    flags=re.IGNORECASE,
-)
-
 
 THUMB_DIR = re.compile('^(?:200|50)$')
 

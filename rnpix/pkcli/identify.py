@@ -95,15 +95,11 @@ def _need_to_index():
         if not common.IMAGE_SUFFIX.search(a):
             continue
         a = _clean_name(a)
-        m = common.STILL_TO_JPG_SUFFIX.search(a)
-        if m and os.path.exists(m.group(1) + '.jpg'):
-            # pcd or arw with a jpg preview already there
-            continue
-        m = common.MOVIE_SUFFIX.search(a)
+        m = common.NEED_PREVIEW.search(a)
         if m:
             x = m.group(1) + '.jpg'
             if os.path.exists(x):
-                # don't index thumbs
+                # don't index previews
                 t.add(x)
         if a in indexed:
             continue
@@ -131,16 +127,20 @@ def _one_day(args):
             ('arw', ['exiftool', '-b', '-PreviewImage', image]),
             # Suffix [5] produces an image 3072 by 2048 ("16 Base")
             ('pcd', ['convert', image + '[5]']),
+            # must have a suffix so this will produce an error
+            ('skp', ['convert', 'YOU-NEED-TO-RUN-SKETCHUP'])
         ):
             if not image.endswith('.' + e):
                 continue
             p = re.sub(f'\\.{e}$', '.jpg', image)
-            if e == 'pcd':
-                subprocess.check_output(s + [p])
-            else:
+            if os.path.exists(p):
+                return p
+            if e in 'arw':
                 i = subprocess.check_output(s)
                 with open(p, 'wb') as f:
                     f.write(i)
+            else:
+                subprocess.check_output(s + [p])
             return p
         return image
 
