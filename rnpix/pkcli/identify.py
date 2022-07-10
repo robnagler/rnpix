@@ -175,7 +175,7 @@ def _one_day(args):
         if simple_msg:
             msg = simple_msg
         else:
-            if common.MOVIE_SUFFIX.search(img):
+            if common.MOVIE.search(img):
                 subprocess.check_call(['open', '-a', 'QuickTime Player.app', img])
             else:
                 subprocess.check_call(['open', '-a', 'Preview.app', preview])
