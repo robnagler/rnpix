@@ -23,7 +23,7 @@ _NEED_JPG = 'dng|pcd|arw|skp'
 
 _STILL = 'jpg|heic|png|tif|gif|psd|pdf|thm|jpeg'
 
-IMAGE_SUFFIX = re.compile(
+STILL = re.compile(
     r'^(.+)\.({}|{}|{})$'.format(_STILL, _MOVIES, _NEED_JPG),
     flags=re.IGNORECASE,
 )
@@ -101,7 +101,7 @@ def move_one(src, dst_root):
     f1 = '%Y-%m-%d-%H.%M.%S'
     f2 = '{}-{}-{}-{}.{}.{}'
     # CreationDate is in timezone as is DateTimeOriginal but not for movies
-    z = ('-CreationDate', '-CreationDateValue', '-createdate') if MOVIE_SUFFIX.search(src.basename) else ('-DateTimeOriginal',)
+    z = ('-CreationDate', '-CreationDateValue', '-createdate') if MOVIE.search(src.basename) else ('-DateTimeOriginal',)
     d = None
     for y in z:
         p = subprocess.run(

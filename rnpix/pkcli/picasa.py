@@ -95,7 +95,7 @@ def _walk(path):
         if (
             p.islink()
             or rnpix.common.THUMB_DIR.search(p.dirpath().basename)
-            or not rnpix.common.IMAGE_SUFFIX.search(p.basename)
+            or not rnpix.common.STILL.search(p.basename)
         ):
             continue
         if start is not None:

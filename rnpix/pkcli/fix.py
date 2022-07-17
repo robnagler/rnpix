@@ -51,7 +51,7 @@ def _one_dir():
     bases = {}
     seen = set()
     for x in glob.glob('*.*'):
-        m = rnpix.common.IMAGE_SUFFIX.search(x)
+        m = rnpix.common.STILL.search(x)
         if m:
             images.add(x)
             # There may be multiple but we are just using for anything
@@ -75,7 +75,7 @@ def _one_dir():
             err('{}: blank line, skipping'.format(l))
             continue
         i, t = m.group(1, 2)
-        m = rnpix.common.IMAGE_SUFFIX.search(i)
+        m = rnpix.common.STILL.search(i)
         if not m:
             if i in bases:
                 err('{}: substituting for {}'.format(i, bases[i]))

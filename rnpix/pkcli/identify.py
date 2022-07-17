@@ -92,7 +92,7 @@ def _need_to_index():
     res = set()
     t = set()
     for a in sorted(os.listdir('.'), key=str.lower):
-        if not common.IMAGE_SUFFIX.search(a):
+        if not common.STILL.search(a):
             continue
         a = _clean_name(a)
         m = common.NEED_PREVIEW.search(a)
