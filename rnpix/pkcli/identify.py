@@ -148,14 +148,14 @@ def _one_day(args):
             return image
         return p
 
-    def _update_index(image, msg):
+    def _update_index(image, msg, preview):
         r = []
         m = f'{image} {msg}\n'
         if os.path.exists('index.txt'):
             with open('index.txt', 'r') as f:
                 p = re.compile(r'^[^\s:]+')
                 for l in f:
-                    if l.startswith(image):
+                    if l.startswith(image) or l.startswith(preview):
                         # preserve order
                         r.append(m)
                         m = ''
@@ -195,7 +195,7 @@ def _one_day(args):
                     os.remove(preview)
                 print(a + ': removed')
             else:
-                _update_index(img, msg)
+                _update_index(img, msg, preview)
         else:
             print(a + ': does not exist')
         if d:
