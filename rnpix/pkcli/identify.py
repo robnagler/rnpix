@@ -125,10 +125,12 @@ def _one_day(args):
             # but better to extract the jpg preview and not modify the
             # camera type
             ('arw', ['exiftool', '-b', '-PreviewImage', image]),
+            # can't produce images that work with Preview so hard to test, this wroks
+            ('icns', ['convert', image]),
             # Suffix [5] produces an image 3072 by 2048 ("16 Base")
             ('pcd', ['convert', image + '[5]']),
             # must have a suffix so this will produce an error
-            ('skp', ['convert', 'YOU-NEED-TO-RUN-SKETCHUP'])
+            ('skp', ['convert', 'YOU-NEED-TO-RUN-SKETCHUP']),
         ):
             if not image.endswith('.' + e):
                 continue
@@ -181,7 +183,6 @@ def _one_day(args):
                 subprocess.check_call(['open', '-a', 'Preview.app', preview])
             msg = input(a + ': ')
             if not msg:
-                status = False
                 break
             if msg == '?':
                 simple_msg = msg

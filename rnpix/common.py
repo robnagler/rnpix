@@ -19,7 +19,8 @@ import time
 
 _MOVIES = '3gp|mp4|mov|mpg|avi|mts|m4v'
 
-_NEED_JPG = 'dng|pcd|arw|skp'
+# icns is for unit testing
+_NEED_JPG = 'icns|dng|pcd|arw|skp'
 
 _STILL = 'jpg|heic|png|tif|gif|psd|pdf|thm|jpeg'
 
