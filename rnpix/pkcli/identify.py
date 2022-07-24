@@ -11,7 +11,7 @@ https://github.com/cebe/js-search
 """
 from __future__ import absolute_import, division, print_function
 from rnpix import common
-from pykern.pkdebug import pkdp
+from pykern.pkdebug import pkdp, pkdlog
 import glob
 import os
 import os.path
@@ -20,6 +20,8 @@ import six
 import subprocess
 import sys
 import uuid
+
+_INDEX_RE = re.compile(r'[\s:]+')
 
 
 def add_to_index(*date_dir):
@@ -95,12 +97,11 @@ def _need_to_index():
         if not common.STILL.search(a):
             continue
         a = _clean_name(a)
-        m = common.NEED_PREVIEW.search(a)
-        if m:
-            x = m.group(1) + '.jpg'
-            if os.path.exists(x):
+        p = _preview(a)
+        if p:
+            if os.path.exists(p):
                 # don't index previews
-                t.add(x)
+                t.add(p)
         if a in indexed:
             continue
         res.add(a)
@@ -148,31 +149,59 @@ def _one_day(args):
             return image
         return p
 
-    def _update_index(image, msg, preview):
-        r = []
-        m = f'{image} {msg}\n'
-        if os.path.exists('index.txt'):
-            with open('index.txt', 'r') as f:
-                p = re.compile(r'^[^\s:]+')
-                for l in f:
-                    if l.startswith(image) or l.startswith(preview):
-                        # preserve order
-                        r.append(m)
-                        m = ''
-                    else:
-                        r.append(l)
+    def _fixup_args(args):
+        i = _index_parse()
+        if not i:
+            return args
+        n = args
+        for a in list(args):
+            p = _preview(a)
+            if not p or p not in i:
+                continue
+            if a in i:
+                pkdlog('both image={} and preview={} are in index.txt; remove preview', a, p)
+            else:
+                pkdlog('replacing preview={} with image={} in index.txt', p, a)
+                i[a] = i[p]
+            del i[p]
+            if not os.path.exists(p):
+                _extract_jpg(a)
+            n.remove(a)
+        _index_write(i)
+        return n
+
+    def _index_parse():
+        r = {}
+        if not os.path.exists('index.txt'):
+            return r
+        with open('index.txt', 'r') as f:
+            for l in f:
+                x = _INDEX_RE.split(l, 1)
+                if not x:
+                    continue
+                if x[0] in r:
+                    pkdlog('duplicate image={} in index.txt; skipping desc={}', x[0], x[1])
+                    continue
+                r[x[0]] = x[1]
+        return r
+
+    def _index_update(image, msg):
+        i = _index_parse()
+        i[image] = f'{msg}\n'
+        _index_write(i)
+
+    def _index_write(values):
         with open('index.txt', 'w') as f:
-            f.write(''.join(r) + m)
+            f.write(
+                ''.join(k + " " + v for k, v in values.items())
+            )
 
     if not args:
         return
-    cwd = os.getcwd()
+    args = _fixup_args(args)
     simple_msg = None
-    for a in args:
-        img = os.path.basename(a)
-        d = os.path.dirname(a)
-        if d:
-            os.chdir(d)
+    for img in args:
+        assert '/' not in img
         if not os.path.exists(img):
             continue
         preview = _extract_jpg(img)
@@ -183,7 +212,7 @@ def _one_day(args):
                 subprocess.check_call(['open', '-a', 'QuickTime Player.app', img])
             else:
                 subprocess.check_call(['open', '-a', 'Preview.app', preview])
-            msg = input(a + ': ')
+            msg = input(img + ': ')
             if not msg:
                 break
             if msg == '?':
@@ -193,18 +222,23 @@ def _one_day(args):
                 os.remove(img)
                 if preview != img:
                     os.remove(preview)
-                print(a + ': removed')
+                pkdlog('image={} removed', img)
             else:
-                _update_index(img, msg, preview)
+                _index_update(img, msg)
         else:
-            print(a + ': does not exist')
-        if d:
-            os.chdir(cwd)
+            pkdlog('image={} does not exist', img)
     try:
         os.remove('index.txt~')
     except Exception:
         pass
     return
+
+
+def _preview(image):
+    m = common.NEED_PREVIEW.search(image)
+    if m:
+        return m.group(1) + '.jpg'
+    return None
 
 
 def _search_all_dirs(addToIndex):
