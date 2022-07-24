@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-u"""Common code
+"""Common code
 
 :copyright: Copyright (c) 2017 Robert Nagler.  All Rights Reserved.
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
@@ -17,37 +17,37 @@ import subprocess
 import time
 
 
-_MOVIES = '3gp|mp4|mov|mpg|avi|mts|m4v'
+_MOVIES = "3gp|mp4|mov|mpg|avi|mts|m4v"
 
 # icns is for unit testing
-_NEED_JPG = 'icns|dng|pcd|arw|skp'
+_NEED_JPG = "icns|dng|pcd|arw|skp"
 
-_STILL = 'jpg|heic|png|tif|gif|psd|pdf|thm|jpeg'
+_STILL = "jpg|heic|png|tif|gif|psd|pdf|thm|jpeg"
 
 STILL = re.compile(
-    r'^(.+)\.({}|{}|{})$'.format(_STILL, _MOVIES, _NEED_JPG),
+    r"^(.+)\.({}|{}|{})$".format(_STILL, _MOVIES, _NEED_JPG),
     flags=re.IGNORECASE,
 )
 
 MOVIE = re.compile(
-    r'^(.+)\.({})$'.format(_MOVIES),
+    r"^(.+)\.({})$".format(_MOVIES),
     flags=re.IGNORECASE,
 )
 
 NEED_PREVIEW = re.compile(
-    r'^(.+)\.({})$'.format(_NEED_JPG + '|' + _MOVIES),
+    r"^(.+)\.({})$".format(_NEED_JPG + "|" + _MOVIES),
     flags=re.IGNORECASE,
 )
 
-THUMB_DIR = re.compile('^(?:200|50)$')
+THUMB_DIR = re.compile("^(?:200|50)$")
 
 
 @contextlib.contextmanager
 def user_lock():
     # Lock directories don't work within Dropbox folders, because
     # Dropbox uploads them and they can hang around after deleting here.
-    lock_d = '/tmp/rnpix-lock-' + os.environ['USER']
-    lock_pid = os.path.join(lock_d, 'pid')
+    lock_d = "/tmp/rnpix-lock-" + os.environ["USER"]
+    lock_pid = os.path.join(lock_d, "pid")
 
     def _pid():
         res = -1
@@ -73,7 +73,7 @@ def user_lock():
             try:
                 os.mkdir(lock_d)
                 is_locked = True
-                with open(lock_pid, 'w') as f:
+                with open(lock_pid, "w") as f:
                     f.write(str(os.getpid()))
                 break
             except OSError as e:
@@ -81,13 +81,13 @@ def user_lock():
                     raise
                 pid = _pid()
                 if pid <= 0:
-                    time.sleep(.4)
+                    time.sleep(0.4)
                     continue
                 if pid == _pid():
                     os.remove(lock_pid)
                     os.rmdir(lock_d)
         else:
-            raise ValueError('{}: unable to create lock'.format(lock_d))
+            raise ValueError("{}: unable to create lock".format(lock_d))
         yield lock_d
     finally:
         if is_locked:
@@ -97,79 +97,85 @@ def user_lock():
 
 def move_one(src, dst_root):
     e = src.ext.lower()
-    if e == '.jpeg':
-        e = '.jpg'
-    f1 = '%Y-%m-%d-%H.%M.%S'
-    f2 = '{}-{}-{}-{}.{}.{}'
+    if e == ".jpeg":
+        e = ".jpg"
+    f1 = "%Y-%m-%d-%H.%M.%S"
+    f2 = "{}-{}-{}-{}.{}.{}"
     # CreationDate is in timezone as is DateTimeOriginal but not for movies
-    z = ('-CreationDate', '-CreationDateValue', '-createdate') if MOVIE.search(src.basename) else ('-DateTimeOriginal',)
+    z = (
+        ("-CreationDate", "-CreationDateValue", "-createdate")
+        if MOVIE.search(src.basename)
+        else ("-DateTimeOriginal",)
+    )
     d = None
     for y in z:
         p = subprocess.run(
-            ('exiftool', '-d', f1, y, '-S', '-s', src),
+            ("exiftool", "-d", f1, y, "-S", "-s", src),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             universal_newlines=True,
         )
         if p.returncode != 0:
-            pykern.pkcli.command_error('exiftool failed: {} {}'.format(src, p.stderr))
-        m = re.search(r'((?:20|19)\d\d)\D(\d\d)\D(\d\d)\D(\d\d)\D(\d\d)\D(\d\d)', str(p.stdout))
+            pykern.pkcli.command_error("exiftool failed: {} {}".format(src, p.stderr))
+        m = re.search(
+            r"((?:20|19)\d\d)\D(\d\d)\D(\d\d)\D(\d\d)\D(\d\d)\D(\d\d)", str(p.stdout)
+        )
         if m:
             # Creation Date Value is 2021:03:15 07:10:01-06:00
             # it's not a date, just a string but it has timezone
             t = f2.format(*m.groups())
-            d = '{}/{}-{}'.format(*m.groups())
+            d = "{}/{}-{}".format(*m.groups())
             break
     if not d:
         d = datetime.datetime.fromtimestamp(src.mtime())
         t = d.strftime(f1)
-        d = d.strftime('%Y/%m-%d')
-        pkdlog('use mtime: {} => {}', src, t)
+        d = d.strftime("%Y/%m-%d")
+        pkdlog("use mtime: {} => {}", src, t)
     if dst_root:
         d = dst_root.join(d)
         pykern.pkio.mkdir_parent(d)
     else:
-        d = pykern.pkio.py_path('.')
+        d = pykern.pkio.py_path(".")
     f = d.join(t + e)
     if f == src:
-        pkdlog('ignoring same name: {}', src, f)
+        pkdlog("ignoring same name: {}", src, f)
         return
-    pkdlog('src {}', src)
+    pkdlog("src {}", src)
     if f.exists():
         for i in range(1, 10):
-            if f.read('rb') == src.read('rb'):
-                pkdlog('removing dup={} keep={}', src, f)
+            if f.read("rb") == src.read("rb"):
+                pkdlog("removing dup={} keep={}", src, f)
                 src.remove(ignore_errors=True)
                 return
-            f = d.join('{}-{}{}'.format(t, i, e))
+            f = d.join("{}-{}{}".format(t, i, e))
             if not f.exists():
                 break
         else:
-            raise AssertionError('{}: exists'.format(f))
+            raise AssertionError("{}: exists".format(f))
     if src.dirname == f.dirname:
         _fix_index(src.dirpath(), src.basename, f.basename)
-        pkdlog('mv {} {}', src.basename, f.basename)
+        pkdlog("mv {} {}", src.basename, f.basename)
     src.rename(f)
-    pkdlog('dst {}', f)
+    pkdlog("dst {}", f)
     return f
 
 
 def root():
-    r = os.getenv('RNPIX_ROOT')
-    assert r, 'must set $RNPIX_ROOT'
+    r = os.getenv("RNPIX_ROOT")
+    assert r, "must set $RNPIX_ROOT"
     return pykern.pkio.py_path(r)
 
 
 def _fix_index(d, old, new):
-    i = d.join('index.txt')
+    i = d.join("index.txt")
     if not i.exists():
         return
     r = []
-    for l in i.read().split('\n'):
+    for l in i.read().split("\n"):
         if len(l.strip()) <= 0:
             continue
         if l.startswith(old):
-            pkdlog('updating index: {} => {}', old, new)
+            pkdlog("updating index: {} => {}", old, new)
             l = l.replace(old, new)
         r.append(l)
-    i.write('\n'.join(r) + '\n')
+    i.write("\n".join(r) + "\n")

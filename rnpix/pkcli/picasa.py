@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-u"""deduplicate
+"""deduplicate
 
 :copyright: Copyright (c) 2021 Robert Nagler.  All Rights Reserved.
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
@@ -21,10 +21,11 @@ def dedup(files, keep):
     a = _split_file(files)
     k = _split_file(keep)
     print(
-f'''#!/bin/bash
+        f"""#!/bin/bash
 set -euo pipefail
 export RNPIX_ROOT='{r}'
-''' + '''
+"""
+        + """
 _mv() {
     local p=$1
     local o=${2:-}
@@ -37,60 +38,64 @@ _mv() {
     if [[ $o ]]; then
         mv "$o" "$p"
     fi
-}'''
+}"""
     )
     for p in sorted(a):
         if not p.check(file=True, exists=True) or p in k:
             continue
-        f = ''
+        f = ""
         o = _originals(p, a)
         if not o:
             # no originals
             continue
-        if not re.search(r'(.+)-\d+$', p.purebasename):
+        if not re.search(r"(.+)-\d+$", p.purebasename):
             for i in range(1, 9):
-                f = p.new(basename=p.basename.replace('.jpg', f'-{i}.jpg'))
+                f = p.new(basename=p.basename.replace(".jpg", f"-{i}.jpg"))
                 if f in o:
                     break
             else:
                 # no originals so should not get here
-                raise AssertionError(f'no originals {p}')
+                raise AssertionError(f"no originals {p}")
         print(f"_mv '{p}' '{f}'")
 
 
 def find(path):
-    """find images created by Google Picasa
-    """
+    """find images created by Google Picasa"""
     for p in _walk(path):
-        if p.ext.lower() not in ('.jpg', '.jpeg'):
+        if p.ext.lower() not in (".jpg", ".jpeg"):
             continue
         x = subprocess.check_output(
-            ('exiftool', '-Creator', '-Artist', '-Orientation', str(p))
+            ("exiftool", "-Creator", "-Artist", "-Orientation", str(p))
         )
-        if b'Picasa' in x and 'Orientation' not in x:
+        if b"Picasa" in x and "Orientation" not in x:
             print(p)
 
 
 def _originals(path, all_picasa):
     b = path.purebasename
-    m = re.search(r'(.+)-\d+$', b)
+    m = re.search(r"(.+)-\d+$", b)
     if m:
         b = m.group(1)
-    p = path.new(purebasename=b + '*')
+    p = path.new(purebasename=b + "*")
     return set(pykern.pkio.sorted_glob(p)) - all_picasa
 
 
 def _split_file(path):
-    return set([
-        pykern.pkio.py_path(f) for f in re.split(
-            r'\s*\n\s*',
-            pykern.pkio.read_text(path),
-        ) if f
-    ])
+    return set(
+        [
+            pykern.pkio.py_path(f)
+            for f in re.split(
+                r"\s*\n\s*",
+                pykern.pkio.read_text(path),
+            )
+            if f
+        ]
+    )
+
 
 def _walk(path):
-    c = ''
-    start = None # '2008-07-22'
+    c = ""
+    start = None  # '2008-07-22'
     for p in pykern.pkio.walk_tree(path):
         if (
             p.islink()
@@ -104,6 +109,6 @@ def _walk(path):
             start = None
         if c != p.dirname:
             c = p.dirname
-            print(f'SLEEP: {c}', file=sys.stderr)
+            print(f"SLEEP: {c}", file=sys.stderr)
             time.sleep(3)
         yield p
