@@ -136,15 +136,17 @@ def _one_day(args):
                 continue
             p = re.sub(f'\\.{e}$', '.jpg', image)
             if os.path.exists(p):
-                return p
+                break
             if e in 'arw':
                 i = subprocess.check_output(s)
                 with open(p, 'wb') as f:
                     f.write(i)
             else:
                 subprocess.check_output(s + [p])
-            return p
-        return image
+            break
+        else:
+            return image
+        return p
 
     def _update_index(image, msg):
         r = []
@@ -193,7 +195,7 @@ def _one_day(args):
                     os.remove(preview)
                 print(a + ': removed')
             else:
-                _update_index(preview, msg)
+                _update_index(img, msg)
         else:
             print(a + ': does not exist')
         if d:
