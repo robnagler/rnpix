@@ -1,11 +1,11 @@
-# -*- coding: utf-8 -*-
-"""?
+"""utilities to fix things
 
-:copyright: Copyright (c) 2016 Robert Nagler.  All Rights Reserved.
+:copyright: Copyright (c) 2016-2024 Robert Nagler.  All Rights Reserved.
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
-from __future__ import absolute_import, division, print_function
+from pykern.collections import PKDict
 from pykern.pkdebug import pkdp
+import exif
 import glob
 import os
 import os.path
@@ -19,8 +19,26 @@ import shutil
 
 _LINE_RE = re.compile(r"^([^\s:]+):?\s*(.*)")
 
+# Need to fix: 1934/12-29/1934-12-29-01.01.01.jpg
+#                                             yyyy        mm        dd       HH       MM       SS
+_DATE_TIME_RE = re.compile(r"(?:^|/)((?:18|19|20)\d\d)\D?(\d\d)\D?(\d\d)\D?(?:(\d\d)\D?(\d\d)\D?(\d\d))?")
 
-def files(*files, dst_root=None):
+def datetime_original(*paths):
+    seen = PKDict()
+    def _date(path):
+
+        path.basename
+    def _update(path):
+        i = _date(path)
+        with path.open("rb") as f:
+            i = exif.Image(f)
+
+    if not files:
+        pykern.pkcli.command_error("must supply files")
+    for f in files:
+        _update(pykern.pkio.py_path(f))
+
+def relocate(*files, dst_root=None):
     if not files:
         pykern.pkcli.command_error("must supply files")
     for f in files:
