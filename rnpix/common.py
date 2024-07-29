@@ -95,7 +95,7 @@ def user_lock():
             os.rmdir(lock_d)
 
 
-def move_one(src, dst_root):
+def move_one(src, dst_root=None):
     e = src.ext.lower()
     if e == ".jpeg":
         e = ".jpg"

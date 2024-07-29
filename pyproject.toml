@@ -1,0 +1,37 @@
+[build-system]
+requires = ["chronver", "setuptools>=66"]
+build-backend = "setuptools.build_meta"
+
+[project]
+authors = [
+    { name = "Rob Nagler", email = "rnpix@robnagler.com" },
+]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Programming Language :: Python",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "exif",
+    "pykern",
+]
+description = "Photo library tools"
+dynamic = ["version"]
+name = "rnpix"
+readme = "README.md"
+
+[project.scripts]
+rnpix = "rnpix.rnpix_console:main"
+
+[project.urls]
+Homepage = "http://github.com/robnagler/rnpix"
+
+[tool.setuptools.package-data]
+rnpix = ["package_data/**"]
+
+[tool.setuptools.packages.find]
+include = ["rnpix*"]
