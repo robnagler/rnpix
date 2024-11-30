@@ -25,13 +25,20 @@ _DATE_TIME_RE = re.compile(r"(?:^|/)((?:18|19|20)\d\d)\D?(\d\d)\D?(\d\d)\D?(?:(\
 
 def datetime_original(*paths):
     seen = PKDict()
-    def _date(path):
+    def _date(path, info):
+        # deal with 01.01.01
+        # otherwise
+        parse the info.datetime_original to see if it close to the date
+        on the file, that is, the date part is the same. if it is,
+        do not update. otherwise, return path info
+        need to _move_one() if the name is a mismatch and then update index
 
-        path.basename
     def _update(path):
-        i = _date(path)
         with path.open("rb") as f:
             i = exif.Image(f)
+        i.datetime_original = _date(path, i)
+        with path.open("wb") as f:
+            f.write(i.get_file())
 
     if not files:
         pykern.pkcli.command_error("must supply files")
