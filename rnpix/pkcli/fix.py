@@ -1,10 +1,11 @@
-"""utilities to fix things
+"""utilities to fix photos
 
-:copyright: Copyright (c) 2016-2024 Robert Nagler.  All Rights Reserved.
+:copyright: Copyright (c) 2016-2025 Robert Nagler.  All Rights Reserved.
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
 from pykern.collections import PKDict
-from pykern.pkdebug import pkdp
+from pykern.pkdebug import pkdp, pkdlog
+import datetime
 import exif
 import glob
 import os
@@ -25,7 +26,58 @@ _DATE_TIME_RE = re.compile(r"(?:^|/)((?:18|19|20)\d\d)\D?(\d\d)\D?(\d\d)\D?(?:(\
 
 def datetime_original(*paths):
     seen = PKDict()
-    def _date(path, info):
+    def _datetime_original(img):
+        if not (d := getattr(img, 'datetime_original')):
+            return None
+        if z := getattr(img, 'offset_time_original'):
+            return datetime.datetime.strptime(d + z, "%Y:%m:%d %H:%M:%S%z").astimezone(datetime.timezone.utc)
+        return datetime.datetime.strptime(d, "%Y:%m:%d %H:%M:%S")
+
+    def _datetime_file(path):
+# deal with mp4 that has a jpg thumbnail (remove the thumbnail)
+# create symlinks for all files that we will be copying
+# ignoring 200 directories
+
+# gif seems to map to avi, which need to be converted
+????-??-??-??.??.??-?.gif
+????-??-??-??.??.??.gif
+
+# movies
+skip, these are thumbnails so if there is a mov or mp4
+ch??.jpg
+dylan-????-and-????.jpg
+dylan-birth.jpg
+dylan-tea.jpg
+janis_emma_????.jpg
+
+
+# skip these, they are in ./2021/10-18 and emma pictures
+????????_???-edit-?.jpg
+????????_???-edit.jpg
+# also 10-18 and have datetimes already set
+????????_???.jpg
+
+# convert png to jpg and then set datetime
+????-??-??-??.??.??.png
+
+
+# All these would be in order so just add number of seconds
+??.jpg
+????-??-??-?.jpg
+# why would this exis
+????-??-??-??.??.??-?.jpg
+????-??-??-??.??.??-??.jpg
+????-??-??-??.??.??.jpg
+????-??-??-??.jpg
+# Only problem is this so ok to have the same timestamp actually
+????-??-??.??.??.??-?.jpg
+????-??-??.??.??.??.jpg
+????-??-??.jpg
+????-??-??_?.jpg
+????-??-??_??.jpg
+????-??-??_????.jpg
+
+
         # deal with 01.01.01
         # otherwise
         parse the info.datetime_original to see if it close to the date
@@ -64,10 +116,10 @@ def v1():
 
 def _one_dir():
     d = os.getcwd()
-    pkdp("{}", d)
+    pkdlog("{}", d)
 
     def err(msg):
-        pkdp("{}: {}".format(d, msg))
+        pkdlog("{}: {}".format(d, msg))
 
     try:
         with open("index.txt") as f:
@@ -134,7 +186,7 @@ def _one_dir():
         for i in images:
             new_lines.append(i + " ?\n")
     if new_lines != lines:
-        pkdp("writing: index.txt")
+        pkdlog("writing: index.txt")
         os.rename("index.txt", "index.txt~")
         with open("index.txt", "w") as f:
             f.write("".join(new_lines))
