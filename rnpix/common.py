@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 """Common code
 
-:copyright: Copyright (c) 2017 Robert Nagler.  All Rights Reserved.
+:copyright: Copyright (c) 2017-2025 Robert Nagler.  All Rights Reserved.
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
-from __future__ import absolute_import, division, print_function
-from pykern.pkdebug import pkdlog, pkdp
+from pykern.pkcollections import PKDict
+from pykern.pkdebug import pkdc, pkdlog, pkdp
 import contextlib
 import datetime
 import errno
@@ -24,7 +23,7 @@ _NEED_JPG = "icns|dng|pcd|arw|skp"
 
 _STILL = "jpg|heic|png|tif|gif|psd|pdf|thm|jpeg"
 
-STILL = re.compile(
+KNOWN_EXT = re.compile(
     r"^(.+)\.({}|{}|{})$".format(_STILL, _MOVIES, _NEED_JPG),
     flags=re.IGNORECASE,
 )
@@ -41,59 +40,64 @@ NEED_PREVIEW = re.compile(
 
 THUMB_DIR = re.compile("^(?:200|50)$")
 
+INDEX_LINE = re.compile(r"^([^\s:]+):?\s*(\S*)")
 
-@contextlib.contextmanager
-def user_lock():
-    # Lock directories don't work within Dropbox folders, because
-    # Dropbox uploads them and they can hang around after deleting here.
-    lock_d = "/tmp/rnpix-lock-" + os.environ["USER"]
-    lock_pid = os.path.join(lock_d, "pid")
+MISSING_DESC = "?"
 
-    def _pid():
-        res = -1
-        try:
-            with open(lock_pid) as f:
-                res = int(f.read())
-        except Exception:
+
+def index_parse(path=None):
+    def _parse(line):
+        if not i := _split(line):
             pass
-        pkdlog(res)
-        if res <= 0:
-            return res
-        try:
-            os.kill(res, 0)
-        except Exception as e:
-            pkdlog(e)
-            if isinstance(e, OSError) and e.errno == errno.ESRCH:
-                return res
-        return -1
-
-    is_locked = False
-    try:
-        for i in range(5):
-            try:
-                os.mkdir(lock_d)
-                is_locked = True
-                with open(lock_pid, "w") as f:
-                    f.write(str(os.getpid()))
-                break
-            except OSError as e:
-                if e.errno != errno.EEXIST:
-                    raise
-                pid = _pid()
-                if pid <= 0:
-                    time.sleep(0.4)
-                    continue
-                if pid == _pid():
-                    os.remove(lock_pid)
-                    os.rmdir(lock_d)
+        elif not path.join(i.name).exists():
+            pkdlog("indexed image={} does not exist", i.name)
+        elif i.name in rv:
+            pkdlog(
+                "duplicate image={} in {}; skipping desc={}", i.name, path, i.desc,
+            )
+        elif not KNOWN_EXT.search(i.name):
+            pkdlog(
+                "invalid ext image={} in {}; skipping desc={}", i.name, path, i.desc,
+            )
+        elif i.desc == MISSING_DESC:
+            # assume everything will get identified
+            pass
         else:
-            raise ValueError("{}: unable to create lock".format(lock_d))
-        yield lock_d
-    finally:
-        if is_locked:
-            os.remove(lock_pid)
-            os.rmdir(lock_d)
+            # success
+            return i
+        return None
 
+    def _split(line):
+        l = line.rstrip()
+        if l and not l.startswith("#"):
+            if m := INDEX_LINE.search(l):
+                return PKDict(zip(("name", "desc"), m.groups()))
+            pkdlog("invalid line={}", l)
+        return None
+
+    rv = PKDict()
+    if path == None:
+        path = pykern.pkio.py_path()
+    if path.check(dir=1):
+        path.join("index.txt")
+    if not path.exists("index.txt"):
+        # No index so return empty PKDict so can be added to
+        return rv
+    with open("index.txt", "r") as f:
+        for l in f:
+            if i := _split(l):
+                rv[i.name] = l[i.desc]
+    return rv
+
+
+def index_update(image, msg):
+    i = common.index_parse()
+    i[image] = f"{msg}\n"
+    index_write(i)
+
+def index_write(values):
+    with open("index.txt", "w") as f:
+        f.write("".join(k + " " + v for k, v in values.items()))
 
 def move_one(src, dst_root=None):
     e = src.ext.lower()
@@ -164,6 +168,59 @@ def root():
     r = os.getenv("RNPIX_ROOT")
     assert r, "must set $RNPIX_ROOT"
     return pykern.pkio.py_path(r)
+
+
+@contextlib.contextmanager
+def user_lock():
+    # Lock directories don't work within Dropbox folders, because
+    # Dropbox uploads them and they can hang around after deleting here.
+    lock_d = "/tmp/rnpix-lock-" + os.environ["USER"]
+    lock_pid = os.path.join(lock_d, "pid")
+
+    def _pid():
+        res = -1
+        try:
+            with open(lock_pid) as f:
+                res = int(f.read())
+        except Exception:
+            pass
+        pkdlog(res)
+        if res <= 0:
+            return res
+        try:
+            os.kill(res, 0)
+        except Exception as e:
+            pkdlog(e)
+            if isinstance(e, OSError) and e.errno == errno.ESRCH:
+                return res
+        return -1
+
+    is_locked = False
+    try:
+        for i in range(5):
+            try:
+                os.mkdir(lock_d)
+                is_locked = True
+                with open(lock_pid, "w") as f:
+                    f.write(str(os.getpid()))
+                break
+            except OSError as e:
+                if e.errno != errno.EEXIST:
+                    raise
+                pid = _pid()
+                if pid <= 0:
+                    time.sleep(0.4)
+                    continue
+                if pid == _pid():
+                    os.remove(lock_pid)
+                    os.rmdir(lock_d)
+        else:
+            raise ValueError("{}: unable to create lock".format(lock_d))
+        yield lock_d
+    finally:
+        if is_locked:
+            os.remove(lock_pid)
+            os.rmdir(lock_d)
 
 
 def _fix_index(d, old, new):

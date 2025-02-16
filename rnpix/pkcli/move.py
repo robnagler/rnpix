@@ -39,7 +39,7 @@ def default_command(*dirs):
         with rnpix.common.user_lock():
             d = pykern.pkio.py_path(d)
             for f in pykern.pkio.sorted_glob(d.join("/*.*")):
-                if rnpix.common.STILL.search(str(f)):
+                if rnpix.common.KNOWN_EXT.search(str(f)):
                     x = rnpix.common.move_one(f, r)
                     if x:
                         t.add(x.dirname)

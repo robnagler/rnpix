@@ -31,13 +31,27 @@ _WEEK = datetime.timedelta(days=7)
 
 def date_time(*paths):
     def _check(path):
+        path = pykern.pkio.py_path(path)
         if path.ext != ".jpg":
             return False
-        return _DateTimeFix(path).need_update()
+        return _check_glob(path) and _DateTimeFix(path).need_update()
+
+    def _check_glob(path):
+        l = pykern.pkio.sorted_glob(str(path.new(ext=".*")))
+        if len(l) == 0:
+            raise AssertionError(f"no matches path={path}")
+        if list(filter(lambda x: x.ext in (".pcd", ".png"), l)):
+            raise ValueError(f"pcd or png in glob={l}")
+        return len(l) == 1
+
+    def _update(path):
+        if d := _check(path):
+            return d.update()
+        return None
 
     if not paths:
         pykern.pkcli.command_error("must supply paths")
-    return [p for p in paths if _check(pykern.pkio.py_path(p))]
+    return list(filter(bool, map(_update, paths)))
 
 
 def relocate(*files, dst_root=None):
@@ -68,15 +82,25 @@ class _DateTimeFix:
     def need_update(self):
         if "-01.01.01" in self.path.purebasename:
             raise ValueError(f"need to rename with _NN path={path}")
-        return not self.exif_dt or abs(self.path_dt - self.exif_dt) > _WEEK
+        if not self.exif_dt or abs(self.path_dt - self.exif_dt) > _WEEK:
+            return self
+        return None
 
     def update(self):
-        self.img.datetime_original = self.path_dt
+        self.img.datetime_original = self.path_dt.strftime("%Y:%m:%d %H:%M:%S")
+        self.img.image_description = "xyzzy"
         with self.path.open("wb") as f:
             f.write(self.img.get_file())
+        return self.path
 
     def _exif_dt(self):
-        if not (d := getattr(self.img, "datetime_original", None)):
+        try:
+            if not (d := getattr(self.img, "datetime_original", None)):
+                return None
+        except KeyError:
+            # I guess if there's no metadata, it gets this
+            # File "exif/_image.py", line 104, in __getattr__
+            # KeyError: 'APP1'
             return None
         if z := getattr(self.img, "offset_time_original", None):
             return datetime.datetime.strptime(d + z, "%Y:%m:%d %H:%M:%S%z").astimezone(
@@ -114,7 +138,7 @@ def _one_dir():
     bases = {}
     seen = set()
     for x in glob.glob("*.*"):
-        m = rnpix.common.STILL.search(x)
+        m = rnpix.common.KNOWN_EXT.search(x)
         if m:
             images.add(x)
             # There may be multiple but we are just using for anything
@@ -138,7 +162,7 @@ def _one_dir():
             err("{}: blank line, skipping".format(l))
             continue
         i, t = m.group(1, 2)
-        m = rnpix.common.STILL.search(i)
+        m = rnpix.common.KNOWN_EXT.search(i)
         if not m:
             if i in bases:
                 err("{}: substituting for {}".format(i, bases[i]))

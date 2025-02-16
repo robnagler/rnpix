@@ -91,7 +91,7 @@ def _walk(path, print_cd=True):
         if (
             p.islink()
             or rnpix.common.THUMB_DIR.search(p.dirpath().basename)
-            or not rnpix.common.STILL.search(p.basename)
+            or not rnpix.common.KNOWN_EXT.search(p.basename)
         ):
             continue
         if print_cd and c != p.dirname:
