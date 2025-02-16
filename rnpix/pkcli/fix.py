@@ -3,7 +3,8 @@
 :copyright: Copyright (c) 2016-2025 Robert Nagler.  All Rights Reserved.
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
-from pykern.collections import PKDict
+
+from pykern.pkcollections import PKDict
 from pykern.pkdebug import pkdp, pkdlog
 import datetime
 import exif
@@ -20,82 +21,24 @@ import shutil
 
 _LINE_RE = re.compile(r"^([^\s:]+):?\s*(.*)")
 
-# Need to fix: 1934/12-29/1934-12-29-01.01.01.jpg
-#                                             yyyy        mm        dd       HH       MM       SS
-_DATE_TIME_RE = re.compile(r"(?:^|/)((?:18|19|20)\d\d)\D?(\d\d)\D?(\d\d)\D?(?:(\d\d)\D?(\d\d)\D?(\d\d))?")
+_DATE_TIME = re.compile(
+    r"^((?:18|19|20)\d\d)\D?(\d\d)\D?(\d\d)\D?(\d\d)\D?(\d\d)\D?(\d\d)"
+)
+_DATE_N = re.compile(r"((?:18|19|20)\d\d)\D?(\d\d)\D?(\d\d)\D+(\d*)")
 
-def datetime_original(*paths):
-    seen = PKDict()
-    def _datetime_original(img):
-        if not (d := getattr(img, 'datetime_original')):
-            return None
-        if z := getattr(img, 'offset_time_original'):
-            return datetime.datetime.strptime(d + z, "%Y:%m:%d %H:%M:%S%z").astimezone(datetime.timezone.utc)
-        return datetime.datetime.strptime(d, "%Y:%m:%d %H:%M:%S")
-
-    def _datetime_file(path):
-# deal with mp4 that has a jpg thumbnail (remove the thumbnail)
-# create symlinks for all files that we will be copying
-# ignoring 200 directories
-
-# gif seems to map to avi, which need to be converted
-????-??-??-??.??.??-?.gif
-????-??-??-??.??.??.gif
-
-# movies
-skip, these are thumbnails so if there is a mov or mp4
-ch??.jpg
-dylan-????-and-????.jpg
-dylan-birth.jpg
-dylan-tea.jpg
-janis_emma_????.jpg
+_WEEK = datetime.timedelta(days=7)
 
 
-# skip these, they are in ./2021/10-18 and emma pictures
-????????_???-edit-?.jpg
-????????_???-edit.jpg
-# also 10-18 and have datetimes already set
-????????_???.jpg
+def date_time(*paths):
+    def _check(path):
+        if path.ext != ".jpg":
+            return False
+        return _DateTimeFix(path).need_update()
 
-# convert png to jpg and then set datetime
-????-??-??-??.??.??.png
+    if not paths:
+        pykern.pkcli.command_error("must supply paths")
+    return [p for p in paths if _check(pykern.pkio.py_path(p))]
 
-
-# All these would be in order so just add number of seconds
-??.jpg
-????-??-??-?.jpg
-# why would this exis
-????-??-??-??.??.??-?.jpg
-????-??-??-??.??.??-??.jpg
-????-??-??-??.??.??.jpg
-????-??-??-??.jpg
-# Only problem is this so ok to have the same timestamp actually
-????-??-??.??.??.??-?.jpg
-????-??-??.??.??.??.jpg
-????-??-??.jpg
-????-??-??_?.jpg
-????-??-??_??.jpg
-????-??-??_????.jpg
-
-
-        # deal with 01.01.01
-        # otherwise
-        parse the info.datetime_original to see if it close to the date
-        on the file, that is, the date part is the same. if it is,
-        do not update. otherwise, return path info
-        need to _move_one() if the name is a mismatch and then update index
-
-    def _update(path):
-        with path.open("rb") as f:
-            i = exif.Image(f)
-        i.datetime_original = _date(path, i)
-        with path.open("wb") as f:
-            f.write(i.get_file())
-
-    if not files:
-        pykern.pkcli.command_error("must supply files")
-    for f in files:
-        _update(pykern.pkio.py_path(f))
 
 def relocate(*files, dst_root=None):
     if not files:
@@ -112,6 +55,47 @@ def v1():
     for f in pykern.pkio.walk_tree(".", file_re=r"index.txt$"):
         with pykern.pkio.save_chdir(f.dirname):
             _one_dir()
+
+
+class _DateTimeFix:
+    def __init__(self, path):
+        self.path = path
+        with self.path.open("rb") as f:
+            self.img = exif.Image(f)
+        self.path_dt = self._path_dt()
+        self.exif_dt = self._exif_dt()
+
+    def need_update(self):
+        if "-01.01.01" in self.path.purebasename:
+            raise ValueError(f"need to rename with _NN path={path}")
+        return not self.exif_dt or abs(self.path_dt - self.exif_dt) > _WEEK
+
+    def update(self):
+        self.img.datetime_original = self.path_dt
+        with self.path.open("wb") as f:
+            f.write(self.img.get_file())
+
+    def _exif_dt(self):
+        if not (d := getattr(self.img, "datetime_original", None)):
+            return None
+        if z := getattr(self.img, "offset_time_original", None):
+            return datetime.datetime.strptime(d + z, "%Y:%m:%d %H:%M:%S%z").astimezone(
+                datetime.timezone.utc
+            )
+        return datetime.datetime.strptime(d, "%Y:%m:%d %H:%M:%S")
+
+    def _path_dt(self):
+        if m := _DATE_TIME.search(self.path.purebasename):
+            d = m.groups()
+        elif (m := _DATE_N.search(self.path.purebasename)) or (
+            m := _DATE_N.search(str(self.path))
+        ):
+            d = [m.group(1), m.group(2), m.group(3), 12]
+            s = int(m.group(4) or 0)
+            d.extend((s // 60, s % 60))
+        else:
+            raise ValueError(f"no match path={path}")
+        return datetime.datetime(*list(map(int, d)))
 
 
 def _one_dir():
