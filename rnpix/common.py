@@ -3,6 +3,7 @@
 :copyright: Copyright (c) 2017-2025 Robert Nagler.  All Rights Reserved.
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
+
 from pykern.pkcollections import PKDict
 from pykern.pkdebug import pkdc, pkdlog, pkdp
 import contextlib
@@ -47,17 +48,23 @@ MISSING_DESC = "?"
 
 def index_parse(path=None):
     def _parse(line):
-        if not i := _split(line):
+        if not (i := _split(line)):
             pass
         elif not path.join(i.name).exists():
             pkdlog("indexed image={} does not exist", i.name)
         elif i.name in rv:
             pkdlog(
-                "duplicate image={} in {}; skipping desc={}", i.name, path, i.desc,
+                "duplicate image={} in {}; skipping desc={}",
+                i.name,
+                path,
+                i.desc,
             )
         elif not KNOWN_EXT.search(i.name):
             pkdlog(
-                "invalid ext image={} in {}; skipping desc={}", i.name, path, i.desc,
+                "invalid ext image={} in {}; skipping desc={}",
+                i.name,
+                path,
+                i.desc,
             )
         elif i.desc == MISSING_DESC:
             # assume everything will get identified
@@ -79,25 +86,27 @@ def index_parse(path=None):
     if path == None:
         path = pykern.pkio.py_path()
     if path.check(dir=1):
-        path.join("index.txt")
-    if not path.exists("index.txt"):
+        path = path.join("index.txt")
+    if not path.exists():
         # No index so return empty PKDict so can be added to
         return rv
     with open("index.txt", "r") as f:
         for l in f:
             if i := _split(l):
-                rv[i.name] = l[i.desc]
+                rv[i.name] = i.desc
     return rv
 
 
-def index_update(image, msg):
-    i = common.index_parse()
-    i[image] = f"{msg}\n"
+def index_update(image, desc):
+    i = index_parse()
+    i[image] = desc
     index_write(i)
+
 
 def index_write(values):
     with open("index.txt", "w") as f:
-        f.write("".join(k + " " + v for k, v in values.items()))
+        f.write("".join(k + " " + v + "\n" for k, v in values.items()))
+
 
 def move_one(src, dst_root=None):
     e = src.ext.lower()
@@ -120,7 +129,8 @@ def move_one(src, dst_root=None):
             universal_newlines=True,
         )
         if p.returncode != 0:
-            pykern.pkcli.command_error("exiftool failed: {} {}".format(src, p.stderr))
+            pkdlog("exiftool failed: path={} stderr={}", src, p.stderr)
+            raise RuntimeError(f"unable to parse image={src}")
         m = re.search(
             r"((?:20|19)\d\d)\D(\d\d)\D(\d\d)\D(\d\d)\D(\d\d)\D(\d\d)", str(p.stdout)
         )

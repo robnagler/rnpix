@@ -1,12 +1,10 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Rename Camera Uploads from Dropbox
 
 :copyright: Copyright (c) 2014-2020 Robert Nagler.  All Rights Reserved.
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
-from __future__ import absolute_import, division, print_function
-from pykern.pkdebug import pkdp, pkdlog
+from pykern.pkcollections import PKDict
+from pykern.pkdebug import pkdc, pkdlog, pkdp
 import pykern.pkio
 import rnpix.common
 

@@ -17,6 +17,7 @@ classifiers = [
 ]
 dependencies = [
     "exif",
+    "pillow",
     "pykern",
 ]
 description = "Photo library tools"

@@ -89,8 +89,7 @@ class _DateTimeFix:
     def update(self):
         self.img.datetime_original = self.path_dt.strftime("%Y:%m:%d %H:%M:%S")
         self.img.image_description = "xyzzy"
-        with self.path.open("wb") as f:
-            f.write(self.img.get_file())
+        self.path.write(self.img.get_file())
         return self.path
 
     def _exif_dt(self):
