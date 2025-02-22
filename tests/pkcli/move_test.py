@@ -38,27 +38,20 @@ def _move_all(monkeypatch, hook=None):
         files = set()
         for i in range(3):
             # See below of datetime_original
-            files.add(_image(uploads.join(f"2017_05_11 13_13_{i}.jpg")).basename)
+            files.add(_image(uploads.join(f"2017_05_11 13_13_{i:02d}.jpg")))
         from rnpix.pkcli import move
 
         move.default_command(uploads)
-        for f in files:
-            pkunit.pkok(photos.join(f).check(), "file={} does not exist", f)
+        for f in map(photos.join, files):
+            pkunit.pkok(f.check(), "file={} does not exist", f)
 
 
 def _image(path):
-    from rnpix import commmon, unit
-    import datetime, exif, re
+    from rnpix import common, unit
 
-    e = exif.Image(unit.image_handle()
-    e.datetime_original = path.purebasename.replace("_", ":")
-    path.write(e.get_file(), "wb")
-    return path.new(purebasename=_base())
-
-    common.DATE_TIME_RE.search(
-    if m := DATE_TIME_RE.search(value):
-        return PKDict(basename
-        t = BASE_FMT.format(*m.groups())
-        d = "{}/{}-{}".format(*m.groups())
-        break
-    return None
+    return (
+        common.exif_set(unit.image_handle(path.purebasename), path).strftime(
+            common.BASE_FTIME
+        )
+        + path.ext
+    )

@@ -36,7 +36,7 @@ MOVIE = re.compile(
 )
 
 NEED_PREVIEW = re.compile(
-    r"^(.+)\.({})$".format(_NEEDJ_PG + "|" + _MOVIES),
+    r"^(.+)\.({})$".format(_NEED_JPG + "|" + _MOVIES),
     flags=re.IGNORECASE,
 )
 
@@ -62,30 +62,15 @@ ORIGINAL_FTIME = "%Y:%m:%d %H:%M:%S"
 
 
 def date_time_parse(path):
-    if m := _DATE_TIME.search(path.purebasename):
+    if m := DATE_TIME_RE.search(path.purebasename):
         d = m.groups()
-    elif (m := rnpix.common.DATE_RE.search(path.purebasename)) or (
-        m := rnpix.common.DATE_RE.search(str(path))
-    ):
+    elif (m := DATE_RE.search(path.purebasename)) or (m := DATE_RE.search(str(path))):
         d = [m.group(1), m.group(2), m.group(3), 12]
         s = int(m.group(4) or 0)
         d.extend((s // 60, s % 60))
     else:
         return None
     return datetime.datetime(*list(map(int, d)))
-
-
-def exif_set(readable, path=None, date_time=None, description=None):
-    if path is None:
-        path = readable
-    assert path.ext == ".jpg"
-    if date_time is None:
-        date_time = date_time_parse(path)
-    e = readable if isinstance(readable, exif.Image) else exif.Image(readable)
-    e.datetime_original = date_time.strftime(ORIGINAL_FTIME)
-    if description is not None:
-        e.description = description
-    path.write(e.get_file(), "wb")
 
 
 def exif_date_time_parse(exif_image):
@@ -102,6 +87,20 @@ def exif_date_time_parse(exif_image):
             datetime.timezone.utc
         )
     return datetime.datetime.strptime(d, ORIGINAL_FTIME)
+
+
+def exif_set(readable, path=None, date_time=None, description=None):
+    if path is None:
+        path = readable
+    assert path.ext == ".jpg"
+    if date_time is None and (date_time := date_time_parse(path)) is None:
+        raise ValueError(f"path={path} does not contain date time")
+    e = readable if isinstance(readable, exif.Image) else exif.Image(readable)
+    e.datetime_original = date_time.strftime(ORIGINAL_FTIME)
+    if description is not None:
+        e.description = description
+    path.write(e.get_file(), "wb")
+    return date_time
 
 
 def index_parse(path=None):
