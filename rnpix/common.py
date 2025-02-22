@@ -42,7 +42,7 @@ NEED_PREVIEW = re.compile(
 
 THUMB_DIR = re.compile("^(?:200|50)$")
 
-INDEX_LINE = re.compile(r"^([^\s:]+):?\s*(\S*)")
+INDEX_LINE = re.compile(r"^([^\s:]+)\s*(.*)")
 
 MISSING_DESC = "?"
 
@@ -84,6 +84,8 @@ def exif_image(readable):
 
 def exif_parse(readable):
     def _date_time(exif_image, date_time):
+        if date_time is None:
+            return None
         if z := getattr(exif_image, "offset_time_original", None):
             return datetime.datetime.strptime(date_time + z, +"%z").astimezone(
                 datetime.timezone.utc
@@ -92,17 +94,14 @@ def exif_parse(readable):
 
     i = exif_image(readable)
     try:
-        if (d := getattr(i, "datetime_original", None)) is None:
-            return None
+        t = getattr(i, "datetime_original", None)
+        d = getattr(i, "description", None)
     except KeyError:
         # I guess if there's no metadata, it gets this
         # File "exif/_image.py", line 104, in __getattr__
         # KeyError: 'APP1'
-        return None
-    return PKDict(
-        description=getattr(i, "description", None),
-        date_time=_date_time(i, d),
-    )
+        t = d = None
+    return PKDict(date_time=_date_time(i, t), description=d)
 
 
 def exif_set(readable, path=None, date_time=None, description=None):
@@ -114,16 +113,18 @@ def exif_set(readable, path=None, date_time=None, description=None):
     if date_time is not None:
         e.datetime_original = date_time.strftime(ORIGINAL_FTIME)
     if description is not None:
-        e.description = description
+        e.image_description = description
+        pkdp(description)
     path.write(e.get_file(), "wb")
     return date_time
 
 
 def index_parse(path=None):
     def _parse(line):
+        nonlocal path
         if not (i := _split(line)):
             pass
-        elif not path.join(i.name).exists():
+        elif not path.new(basename=i.name).exists():
             pkdlog("indexed image={} does not exist", i.name)
         elif i.name in rv:
             pkdlog(
@@ -156,16 +157,16 @@ def index_parse(path=None):
         return None
 
     rv = PKDict()
-    if path == None:
+    if path is None:
         path = pykern.pkio.py_path()
     if path.check(dir=1):
         path = path.join("index.txt")
     if not path.exists():
         # No index so return empty PKDict so can be added to
         return rv
-    with open("index.txt", "r") as f:
+    with path.open("rt") as f:
         for l in f:
-            if i := _split(l):
+            if i := _parse(l):
                 rv[i.name] = i.desc
     return rv
 
