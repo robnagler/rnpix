@@ -24,12 +24,12 @@ _LINE_RE = re.compile(r"^([^\s:]+):?\s*(.*)")
 _WEEK = datetime.timedelta(days=7)
 
 
-def date_time(*paths):
+def exif_data(*paths):
     def _check(path):
         path = pykern.pkio.py_path(path)
         if path.ext != ".jpg":
             return False
-        return _check_glob(path) and _DateTimeFix(path).need_update()
+        return _check_glob(path) and _ExifData(path).need_update(update_description)
 
     def _check_glob(path):
         l = pykern.pkio.sorted_glob(str(pkdp(path.new(ext=".*"))))
@@ -66,27 +66,30 @@ def v1():
             _one_dir()
 
 
-class _DateTimeFix:
+class _ExifData:
     def __init__(self, path):
         self.path = path
         with self.path.open("rb") as f:
             self.img = exif.Image(f)
         self.path_dt = rnpix.common.date_time_parse(self.path)
-        self.exif_dt = rnpix.common.exif_date_time_parse(self.img)
+        if not self.path_dt:
+            raise ValueError(f"no date time in path={path}")
+        self.exif = rnpix.common.exif_parse(self.img) or PKDict(date_time=None, description=None)
+        self.desc = common.index_parse(self.path).get(self.path.basename))
 
-    def need_update(self):
+    def need_update(self, update_description):
         if "-01.01.01" in self.path.purebasename:
             raise ValueError(f"need to rename with _NN path={path}")
-        if not self.exif_dt or abs(self.path_dt - self.exif_dt) > _WEEK:
-            return self
-        return None
+        self.need_dt = not self.exif.date_time or abs(self.path_dt - self.exif.date_time) > _WEEK
+        self.need_desc = bool(self.desc) and self.exif.description != self.desc
+        return self if self.need_dt and self.need_desc else None
 
     def update(self):
         rnpix.common.exif_set(
             self.img,
             self.path,
             self.path_dt,
-            "xyzzy",
+            self.description,
         )
         return self.path
 

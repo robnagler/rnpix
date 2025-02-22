@@ -10,7 +10,10 @@ def image_create(path_dt):
 
     return path_dt.new(
         purebasename=common.exif_set(
-            image_create_handle(path_dt.purebasename), path_dt
+            image_create_handle(path_dt.purebasename),
+            path=path_dt,
+            date_time=common.date_time_parse(path),
+            description=path_dt.purebasename,
         ).strftime(common.BASE_FTIME)
     )
 

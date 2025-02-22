@@ -73,23 +73,6 @@ def date_time_parse(path):
     return datetime.datetime(*list(map(int, d)))
 
 
-def exif_date_time_parse(readable):
-    i = exif_image(readable)
-    try:
-        if (d := getattr(i, "datetime_original", None)) is None:
-            return None
-    except KeyError:
-        # I guess if there's no metadata, it gets this
-        # File "exif/_image.py", line 104, in __getattr__
-        # KeyError: 'APP1'
-        return None
-    if z := getattr(i, "offset_time_original", None):
-        return datetime.datetime.strptime(d + z, +"%z").astimezone(
-            datetime.timezone.utc
-        )
-    return datetime.datetime.strptime(d, ORIGINAL_FTIME)
-
-
 def exif_image(readable):
     if isinstance(readable, exif.Image):
         return readable
@@ -99,14 +82,37 @@ def exif_image(readable):
     return exif.Image(readable)
 
 
+def exif_parse(readable):
+    def _date_time(exif_image, date_time):
+        if z := getattr(exif_image, "offset_time_original", None):
+            return datetime.datetime.strptime(date_time + z, +"%z").astimezone(
+                datetime.timezone.utc
+            )
+        return datetime.datetime.strptime(date_time, ORIGINAL_FTIME)
+
+    i = exif_image(readable)
+    try:
+        if (d := getattr(i, "datetime_original", None)) is None:
+            return None
+    except KeyError:
+        # I guess if there's no metadata, it gets this
+        # File "exif/_image.py", line 104, in __getattr__
+        # KeyError: 'APP1'
+        return None
+    return PKDict(
+        description=getattr(i, "description", None),
+        date_time=_date_time(i, d),
+    )
+
+
 def exif_set(readable, path=None, date_time=None, description=None):
     if path is None:
         path = readable
     assert path.ext == ".jpg"
-    if date_time is None and (date_time := date_time_parse(path)) is None:
-        raise ValueError(f"path={path} does not contain date time")
+    assert date_time or description
     e = exif_image(readable)
-    e.datetime_original = date_time.strftime(ORIGINAL_FTIME)
+    if date_time is not None:
+        e.datetime_original = date_time.strftime(ORIGINAL_FTIME)
     if description is not None:
         e.description = description
     path.write(e.get_file(), "wb")
