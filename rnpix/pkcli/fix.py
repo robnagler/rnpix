@@ -21,11 +21,6 @@ import shutil
 
 _LINE_RE = re.compile(r"^([^\s:]+):?\s*(.*)")
 
-_DATE_TIME = re.compile(
-    r"^((?:18|19|20)\d\d)\D?(\d\d)\D?(\d\d)\D?(\d\d)\D?(\d\d)\D?(\d\d)"
-)
-_DATE_N = re.compile(r"((?:18|19|20)\d\d)\D?(\d\d)\D?(\d\d)\D+(\d*)")
-
 _WEEK = datetime.timedelta(days=7)
 
 
@@ -76,8 +71,8 @@ class _DateTimeFix:
         self.path = path
         with self.path.open("rb") as f:
             self.img = exif.Image(f)
-        self.path_dt = self._path_dt()
-        self.exif_dt = self._exif_dt()
+        self.path_dt = rnpix.common.date_time_parse(self.path)
+        self.exif_dt = rnpix.common.exif_date_time_parse(self.path)
 
     def need_update(self):
         if "-01.01.01" in self.path.purebasename:
@@ -87,38 +82,18 @@ class _DateTimeFix:
         return None
 
     def update(self):
-        self.img.datetime_original = self.path_dt.strftime("%Y:%m:%d %H:%M:%S")
-        self.img.image_description = "xyzzy"
-        self.path.write(self.img.get_file())
+        rnpix.common.exif_set(
+            self.img,
+            self.path,
+            self.path_dt,
+            "xyzzy",
+        )
         return self.path
 
-    def _exif_dt(self):
-        try:
-            if not (d := getattr(self.img, "datetime_original", None)):
-                return None
-        except KeyError:
-            # I guess if there's no metadata, it gets this
-            # File "exif/_image.py", line 104, in __getattr__
-            # KeyError: 'APP1'
-            return None
-        if z := getattr(self.img, "offset_time_original", None):
-            return datetime.datetime.strptime(d + z, "%Y:%m:%d %H:%M:%S%z").astimezone(
-                datetime.timezone.utc
-            )
-        return datetime.datetime.strptime(d, "%Y:%m:%d %H:%M:%S")
-
     def _path_dt(self):
-        if m := _DATE_TIME.search(self.path.purebasename):
-            d = m.groups()
-        elif (m := _DATE_N.search(self.path.purebasename)) or (
-            m := _DATE_N.search(str(self.path))
-        ):
-            d = [m.group(1), m.group(2), m.group(3), 12]
-            s = int(m.group(4) or 0)
-            d.extend((s // 60, s % 60))
-        else:
+        if (rv := rnpix.commong.date_time_parse(self.path)) is None
             raise ValueError(f"no match path={path}")
-        return datetime.datetime(*list(map(int, d)))
+        return rv
 
 
 def _one_dir():

@@ -9,6 +9,7 @@ from pykern.pkdebug import pkdc, pkdlog, pkdp
 import contextlib
 import datetime
 import errno
+import exif
 import os
 import os.path
 import pykern.pkio
@@ -35,7 +36,7 @@ MOVIE = re.compile(
 )
 
 NEED_PREVIEW = re.compile(
-    r"^(.+)\.({})$".format(_NEED_JPG + "|" + _MOVIES),
+    r"^(.+)\.({})$".format(_NEEDJ_PG + "|" + _MOVIES),
     flags=re.IGNORECASE,
 )
 
@@ -44,6 +45,63 @@ THUMB_DIR = re.compile("^(?:200|50)$")
 INDEX_LINE = re.compile(r"^([^\s:]+):?\s*(\S*)")
 
 MISSING_DESC = "?"
+
+# Creation Date Value is 2021:03:15 07:10:01-06:00
+# it's not a date, just a string but it has timezone
+DATE_TIME_RE = re.compile(r"((?:18|19|20)\d\d)\D(\d\d)\D(\d\d)\D(\d\d)\D(\d\d)\D(\d\d)")
+
+# Also includes a trailing diit possibly
+DATE_RE = re.compile(r"((?:18|19|20)\d\d)\D?(\d\d)\D?(\d\d)\D+(\d*)")
+
+BASE_FTIME = "%Y-%m-%d-%H.%M.%S"
+BASE_FMT = "{}-{}-{}-{}.{}.{}"
+DIR_FMT = "{}/{}-{}"
+DIR_FTIME = "%Y/%m-%d"
+
+ORIGINAL_FTIME = "%Y:%m:%d %H:%M:%S"
+
+
+def date_time_parse(path):
+    if m := _DATE_TIME.search(path.purebasename):
+        d = m.groups()
+    elif (m := rnpix.common.DATE_RE.search(path.purebasename)) or (
+        m := rnpix.common.DATE_RE.search(str(path))
+    ):
+        d = [m.group(1), m.group(2), m.group(3), 12]
+        s = int(m.group(4) or 0)
+        d.extend((s // 60, s % 60))
+    else:
+        return None
+    return datetime.datetime(*list(map(int, d)))
+
+
+def exif_set(readable, path=None, date_time=None, description=None):
+    if path is None:
+        path = readable
+    assert path.ext == ".jpg"
+    if date_time is None:
+        date_time = date_time_parse(path)
+    e = readable if isinstance(readable, exif.Image) else exif.Image(readable)
+    e.datetime_original = date_time.strftime(ORIGINAL_FTIME)
+    if description is not None:
+        e.description = description
+    path.write(e.get_file(), "wb")
+
+
+def exif_date_time_parse(exif_image):
+    try:
+        if not (d := getattr(exif_image, "datetime_original", None)):
+            return None
+    except KeyError:
+        # I guess if there's no metadata, it gets this
+        # File "exif/_image.py", line 104, in __getattr__
+        # KeyError: 'APP1'
+        return None
+    if z := getattr(exif_image, "offset_time_original", None):
+        return datetime.datetime.strptime(d + z, +"%z").astimezone(
+            datetime.timezone.utc
+        )
+    return datetime.datetime.strptime(d, ORIGINAL_FTIME)
 
 
 def index_parse(path=None):
@@ -112,8 +170,6 @@ def move_one(src, dst_root=None):
     e = src.ext.lower()
     if e == ".jpeg":
         e = ".jpg"
-    f1 = "%Y-%m-%d-%H.%M.%S"
-    f2 = "{}-{}-{}-{}.{}.{}"
     # CreationDate is in timezone as is DateTimeOriginal but not for movies
     z = (
         ("-CreationDate", "-CreationDateValue", "-createdate")
@@ -123,7 +179,7 @@ def move_one(src, dst_root=None):
     d = None
     for y in z:
         p = subprocess.run(
-            ("exiftool", "-d", f1, y, "-S", "-s", src),
+            ("exiftool", "-d", BASE_FTIME, y, "-S", "-s", src),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             universal_newlines=True,
@@ -131,19 +187,14 @@ def move_one(src, dst_root=None):
         if p.returncode != 0:
             pkdlog("exiftool failed: path={} stderr={}", src, p.stderr)
             raise RuntimeError(f"unable to parse image={src}")
-        m = re.search(
-            r"((?:20|19)\d\d)\D(\d\d)\D(\d\d)\D(\d\d)\D(\d\d)\D(\d\d)", str(p.stdout)
-        )
-        if m:
-            # Creation Date Value is 2021:03:15 07:10:01-06:00
-            # it's not a date, just a string but it has timezone
-            t = f2.format(*m.groups())
-            d = "{}/{}-{}".format(*m.groups())
+        if m := DATE_TIME_RE.search(str(p.stdout)):
+            t = BASE_FMT.format(*m.groups())
+            d = DIR_FMT.format(*m.groups())
             break
     if not d:
         d = datetime.datetime.fromtimestamp(src.mtime())
-        t = d.strftime(f1)
-        d = d.strftime("%Y/%m-%d")
+        t = d.strftime(BASE_FTIME)
+        d = d.strftime(DIR_FTIME)
         pkdlog("use mtime: {} => {}", src, t)
     if dst_root:
         d = dst_root.join(d)

@@ -1,6 +1,6 @@
 """test dropbox_uploads
 
-:copyright: Copyright (c) 2017 RadiaSoft LLC.  All Rights Reserved.
+:copyright: Copyright (c) 2017-2025 Robert Nagler.  All Rights Reserved.
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
 
@@ -47,23 +47,18 @@ def _move_all(monkeypatch, hook=None):
 
 
 def _image(path):
-    from PIL import Image, ImageFont, ImageDraw
-    from pykern import pkdebug
-    import io, datetime, exif, re
+    from rnpix import commmon, unit
+    import datetime, exif, re
 
-    def _base():
-        return datetime.datetime(
-            *list(map(int, re.split(r"\D", path.purebasename)))
-        ).strftime("%Y-%m-%d-%H.%M.%S")
-
-    with Image.new("RGB", (500, 300), color=(255, 255, 200)) as i:
-        ImageDraw.Draw(i).text(
-            (100, 100), path.basename, fill=(0, 0, 0), font=ImageFont.load_default()
-        )
-        b = io.BytesIO()
-        i.save(b, "JPEG")
-        b.seek(0)
-    e = exif.Image(b)
+    e = exif.Image(unit.image_handle()
     e.datetime_original = path.purebasename.replace("_", ":")
     path.write(e.get_file(), "wb")
     return path.new(purebasename=_base())
+
+    common.DATE_TIME_RE.search(
+    if m := DATE_TIME_RE.search(value):
+        return PKDict(basename
+        t = BASE_FMT.format(*m.groups())
+        d = "{}/{}-{}".format(*m.groups())
+        break
+    return None
