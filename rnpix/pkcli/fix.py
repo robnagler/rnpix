@@ -46,7 +46,7 @@ def date_time(*paths):
 
     if not paths:
         pykern.pkcli.command_error("must supply paths")
-    return list(filter(bool, map(_update, paths)))
+    return tuple(sorted(filter(bool, map(_update, paths))))
 
 
 def relocate(*files, dst_root=None):
@@ -72,7 +72,7 @@ class _DateTimeFix:
         with self.path.open("rb") as f:
             self.img = exif.Image(f)
         self.path_dt = rnpix.common.date_time_parse(self.path)
-        self.exif_dt = rnpix.common.exif_date_time_parse(self.path)
+        self.exif_dt = rnpix.common.exif_date_time_parse(self.img)
 
     def need_update(self):
         if "-01.01.01" in self.path.purebasename:

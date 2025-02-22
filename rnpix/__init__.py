@@ -3,6 +3,7 @@
 :copyright: Copyright (c) 2024 Robert Nagler.  All Rights Reserved.
 :license: https://www.apache.org/licenses/LICENSE-2.0.html
 """
+
 import pkg_resources
 
 try:

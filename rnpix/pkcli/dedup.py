@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 """deduplicate
 
 :copyright: Copyright (c) 2021 Robert Nagler.  All Rights Reserved.
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
-from __future__ import absolute_import, division, print_function
+
 from pykern.pkcollections import PKDict
 from pykern.pkdebug import pkdc, pkdlog, pkdp
 import dbm.ndbm
@@ -34,7 +33,7 @@ def find(path, nowrite=False, overwrite=False, skip=""):
                 continue
             i += 1
             if i % 10 == 0:
-                print("#sleep 3")
+                pkdc("#sleep 3")
                 time.sleep(2)
             s, p = _signature(p)
             if s in m and not overwrite:
@@ -47,9 +46,9 @@ def find(path, nowrite=False, overwrite=False, skip=""):
                     m[s] = str(p).encode()
                     p = o
                 x = f'"{p}"' if "'" in str(p) else f"'{p}'"
-                print(f"#OLD {m[s].decode()}\nrm {x}")
+                pkdc(f"#OLD {m[s].decode()}\nrm {x}")
             else:
-                print(f"#NEW {p}")
+                pkdc(f"#NEW {p}")
                 if not nowrite:
                     m[s] = str(p).encode()
 
@@ -62,9 +61,9 @@ def not_in_db(path):
         "r",
     ) as m:
         v = set([m[k] for k in m.keys()])
-    for p in _walk(path, print_cd=False):
+    for p in _walk(path, pkdc_cd=False):
         if str(p).encode() not in v:
-            print(p)
+            pkdc(p)
 
 
 def _signature(path):
@@ -85,7 +84,7 @@ def _signature(path):
     return (hashlib.md5(path.read_binary()).digest(), path)
 
 
-def _walk(path, print_cd=True):
+def _walk(path, pkdc_cd=True):
     c = ""
     for p in pykern.pkio.walk_tree(path):
         if (
@@ -94,7 +93,7 @@ def _walk(path, print_cd=True):
             or not rnpix.common.KNOWN_EXT.search(p.basename)
         ):
             continue
-        if print_cd and c != p.dirname:
-            print(f"#CD {p.dirname}")
+        if pkdc_cd and c != p.dirname:
+            pkdc(f"#CD {p.dirname}")
             c = p.dirname
         yield p

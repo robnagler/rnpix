@@ -8,6 +8,7 @@ https://github.com/cebe/js-search
 :copyright: Copyright (c) 2016 Robert Nagler.  All Rights Reserved.
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
+
 from pykern.pkcollections import PKDict
 from pykern.pkdebug import pkdc, pkdlog, pkdp
 from rnpix import common
