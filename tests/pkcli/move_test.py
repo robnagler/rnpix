@@ -28,6 +28,10 @@ def test_lock(monkeypatch):
 
 def _move_all(monkeypatch, hook=None):
     from pykern import pkunit
+    from rnpix import unit
+
+    def _image(uploads, index):
+        return unit.image_create(uploads.join(f"2017_05_11 13_13_{i:02d}.jpg")).basename
 
     with pkunit.save_chdir_work() as d:
         photos = d.ensure("Dropbox", "Photos", "2017", "05-11", dir=True)
@@ -37,21 +41,9 @@ def _move_all(monkeypatch, hook=None):
             hook()
         files = set()
         for i in range(3):
-            # See below of datetime_original
-            files.add(_image(uploads.join(f"2017_05_11 13_13_{i:02d}.jpg")))
+            files.add(_image(uploads, i))
         from rnpix.pkcli import move
 
         move.default_command(uploads)
         for f in map(photos.join, files):
             pkunit.pkok(f.check(), "file={} does not exist", f)
-
-
-def _image(path):
-    from rnpix import common, unit
-
-    return (
-        common.exif_set(unit.image_handle(path.purebasename), path).strftime(
-            common.BASE_FTIME
-        )
-        + path.ext
-    )

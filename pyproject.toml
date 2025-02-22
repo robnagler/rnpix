@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 authors = [
-    { name = "Rob Nagler", email = "rnpix@robnagler.com" },
+    { name = "Robert Nagler", email = "rnpix@robnagler.com" },
 ]
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",

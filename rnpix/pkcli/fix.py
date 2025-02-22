@@ -32,7 +32,7 @@ def date_time(*paths):
         return _check_glob(path) and _DateTimeFix(path).need_update()
 
     def _check_glob(path):
-        l = pykern.pkio.sorted_glob(str(path.new(ext=".*")))
+        l = pykern.pkio.sorted_glob(str(pkdp(path.new(ext=".*"))))
         if len(l) == 0:
             raise AssertionError(f"no matches path={path}")
         if list(filter(lambda x: x.ext in (".pcd", ".png"), l)):
@@ -91,7 +91,7 @@ class _DateTimeFix:
         return self.path
 
     def _path_dt(self):
-        if (rv := rnpix.commong.date_time_parse(self.path)) is None
+        if (rv := rnpix.common.date_time_parse(self.path)) is None:
             raise ValueError(f"no match path={path}")
         return rv
 
