@@ -24,7 +24,7 @@ _LINE_RE = re.compile(r"^([^\s:]+):?\s*(.*)")
 _WEEK = datetime.timedelta(days=7)
 
 
-def exif_data(*paths):
+def exif_data(*paths, dry_run=False):
     index_cache = PKDict()
 
     def _check(path):
@@ -45,6 +45,8 @@ def exif_data(*paths):
 
     def _update(path):
         if d := _check(path):
+            if dry_run:
+                return d.path
             return d.update()
         return None
 
