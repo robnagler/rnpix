@@ -43,11 +43,14 @@ def test_date_time():
         p.write_binary(unit.image_create_handle(p.basename).read())
         return PKDict(path=p, desc=base + " sometag")
 
+    def _paths(expect):
+        return tuple(map(lambda x: x.path, expect.values()))
+
     with pkunit.save_chdir_work() as d:
         e = _expect(d)
         pkeq(
-            tuple(sorted(map(lambda x: x.path, e.values()))),
-            fix.exif_data(*list(map(lambda x: x.path, e.values()))),
+            tuple(sorted(_paths(e))),
+            fix.exif_data(*_paths(e)),
             "verify all files changed",
         )
         for k, v in e.items():
@@ -56,6 +59,6 @@ def test_date_time():
             pkeq(v.desc, a.description, "desc mismatch path={}", v)
         pkeq(
             tuple(),
-            fix.date_time(*list(e.values())),
+            fix.exif_data(*_paths(e)),
             "files should not change a second time",
         )

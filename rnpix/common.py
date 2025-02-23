@@ -95,7 +95,7 @@ def exif_parse(readable):
     i = exif_image(readable)
     try:
         t = getattr(i, "datetime_original", None)
-        d = getattr(i, "description", None)
+        d = getattr(i, "image_description", None)
     except KeyError:
         # I guess if there's no metadata, it gets this
         # File "exif/_image.py", line 104, in __getattr__
