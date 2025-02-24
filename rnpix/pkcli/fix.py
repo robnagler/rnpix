@@ -1,11 +1,13 @@
-# -*- coding: utf-8 -*-
-"""?
+"""utilities to fix photos
 
-:copyright: Copyright (c) 2016 Robert Nagler.  All Rights Reserved.
+:copyright: Copyright (c) 2016-2025 Robert Nagler.  All Rights Reserved.
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
-from __future__ import absolute_import, division, print_function
-from pykern.pkdebug import pkdp
+
+from pykern.pkcollections import PKDict
+from pykern.pkdebug import pkdp, pkdlog
+import datetime
+import exif
 import glob
 import os
 import os.path
@@ -19,8 +21,49 @@ import shutil
 
 _LINE_RE = re.compile(r"^([^\s:]+):?\s*(.*)")
 
+_WEEK = datetime.timedelta(days=7)
 
-def files(*files, dst_root=None):
+
+def exif_data(*paths, dry_run=False, exiftool=True):
+    index_cache = PKDict()
+
+    def _check(path):
+        nonlocal index_cache
+
+        path = pykern.pkio.py_path(path)
+        if path.ext != ".jpg":
+            return False
+        return (
+            _check_glob(path)
+            and _ExifData(path, index_cache, exiftool=exiftool).need_update()
+        )
+
+    def _check_glob(path):
+        l = pykern.pkio.sorted_glob(str(path.new(ext=".*")))
+        if len(l) == 0:
+            raise AssertionError(f"no matches path={path}")
+        if list(filter(lambda x: x.ext in (".pcd", ".png"), l)):
+            raise ValueError(f"pcd or png in glob={l}")
+        return len(l) == 1
+
+    def _update(path):
+        try:
+            if d := _check(path):
+                if dry_run:
+                    return d.path
+                return d.update()
+            return None
+        except Exception:
+            pkdlog("path={}", path)
+            raise
+
+    if not paths:
+        pykern.pkcli.command_error("must supply paths")
+    rv = tuple(sorted(filter(bool, map(_update, paths))))
+    return "\n".join(rv) if exiftool else rv
+
+
+def relocate(*files, dst_root=None):
     if not files:
         pykern.pkcli.command_error("must supply files")
     for f in files:
@@ -30,87 +73,62 @@ def files(*files, dst_root=None):
         )
 
 
-def v1():
-    """Find all dirs and try to fix"""
-    for f in pykern.pkio.walk_tree(".", file_re=r"index.txt$"):
-        with pykern.pkio.save_chdir(f.dirname):
-            _one_dir()
+class _ExifData:
+    def __init__(self, path, index_cache, exiftool):
+        def _desc(index_path):
+            if (i := index_cache.get(index_path)) is None:
+                i = index_cache[index_path] = rnpix.common.index_parse(index_path)
+            return i.get(self.path.basename)
 
+        self.path = path
+        self.exiftool = exiftool
+        with self.path.open("rb") as f:
+            try:
+                self.img = exif.Image(f)
+                self.exif = rnpix.common.exif_parse(self.img)
+            except Exception as e:
+                if "UnpackError" not in getattr(type(e), "__name__", ""):
+                    raise
+                pkdlog("force update path={} exif error exception={}", path, type(e))
+                self.exiftool = True
+                self.img = None
+                self.exif = PKDict(date_time=None, description=None)
+        self.path_dt = rnpix.common.date_time_parse(self.path)
+        if not self.path_dt:
+            raise ValueError(f"no date time in path={path}")
+        # Always returns something valid
+        self.desc = _desc(self.path.dirpath())
 
-def _one_dir():
-    d = os.getcwd()
-    pkdp("{}", d)
+    def need_update(self):
+        if "-01.01.01" in self.path.purebasename:
+            raise ValueError(f"need to rename with _NN path={path}")
+        self.need_dt = (
+            not self.exif.date_time or abs(self.path_dt - self.exif.date_time) > _WEEK
+        )
+        self.need_desc = bool(self.desc) and self.exif.description != self.desc
+        return self if self.need_dt or self.need_desc else None
 
-    def err(msg):
-        pkdp("{}: {}".format(d, msg))
+    def update(self):
+        if self.exiftool:
+            rv = "exiftool -overwrite_original"
+            if self.need_desc:
+                rv += " -ImageDescription='" + self.desc.replace("'", "'\"'\"'") + "'"
+            if self.need_dt:
+                rv += (
+                    " -XMP:DateTimeOriginal='"
+                    + self.path_dt.strftime(rnpix.common.ORIGINAL_FTIME)
+                    + "'"
+                )
+            return rv + f" '{self.path}'"
+        k = PKDict(path=self.path)
+        if self.need_desc:
+            k.description = self.desc
+        if self.need_dt:
+            k.date_time = self.path_dt
+        rnpix.common.exif_set(self.img, **k)
+        return self.path
 
-    try:
-        with open("index.txt") as f:
-            lines = list(f)
-    except:
-        return
-    images = set()
-    bases = {}
-    seen = set()
-    for x in glob.glob("*.*"):
-        m = rnpix.common.STILL.search(x)
-        if m:
-            images.add(x)
-            # There may be multiple but we are just using for anything
-            # to match image bases only
-            bases[m.group(1)] = x
-    new_lines = []
-    for l in lines:
-        if re.search(r"^#\S+\.avi", l):
-            # Fix previous avi bug
-            l = l[1:]
-        elif re.search(r"^#\d+_\d+\.jpg", l):
-            l = l[1:].replace("_", "-", 1)
-        elif l.startswith("#"):
-            new_lines.append(l)
-            continue
-        m = _LINE_RE.search(l)
-        if not m:
-            if re.search(r"\S", l):
-                err("{}: strange line, commenting".format(l))
-                new_lines.append("#" + l)
-            err("{}: blank line, skipping".format(l))
-            continue
-        i, t = m.group(1, 2)
-        m = rnpix.common.STILL.search(i)
-        if not m:
-            if i in bases:
-                err("{}: substituting for {}".format(i, bases[i]))
-                i = bases[i]
-                l = i + " " + t + "\n"
-            else:
-                err("{}: no such base or image, commenting".format(i))
-                new_lines.append("#" + l)
-                continue
-        if i in images:
-            images.remove(i)
-            seen.add(i)
-        else:
-            if i in seen:
-                if t == "?":
-                    err("{}: already seen no text, skipping".format(i))
-                    continue
-                err("{}: already seen with text".format(i))
-            err("{}: no such image: text={}".format(i, t))
-            new_lines.append("#" + l)
-            continue
-        if not len(t):
-            err('{}: no text, adding "?"'.format(l))
-            l = i + " ?\n"
-        new_lines.append(l)
-
-    if images:
-        err("{}: extra images, append".format(images))
-        for i in images:
-            new_lines.append(i + " ?\n")
-    if new_lines != lines:
-        pkdp("writing: index.txt")
-        os.rename("index.txt", "index.txt~")
-        with open("index.txt", "w") as f:
-            f.write("".join(new_lines))
-        shutil.copymode("index.txt~", "index.txt")
+    def _path_dt(self):
+        if (rv := rnpix.common.date_time_parse(self.path)) is None:
+            raise ValueError(f"no match path={path}")
+        return rv

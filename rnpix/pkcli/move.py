@@ -1,12 +1,11 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Rename Camera Uploads from Dropbox
 
 :copyright: Copyright (c) 2014-2020 Robert Nagler.  All Rights Reserved.
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
-from __future__ import absolute_import, division, print_function
-from pykern.pkdebug import pkdp, pkdlog
+
+from pykern.pkcollections import PKDict
+from pykern.pkdebug import pkdc, pkdlog, pkdp
 import pykern.pkio
 import rnpix.common
 
@@ -39,7 +38,7 @@ def default_command(*dirs):
         with rnpix.common.user_lock():
             d = pykern.pkio.py_path(d)
             for f in pykern.pkio.sorted_glob(d.join("/*.*")):
-                if rnpix.common.STILL.search(str(f)):
+                if rnpix.common.KNOWN_EXT.search(str(f)):
                     x = rnpix.common.move_one(f, r)
                     if x:
                         t.add(x.dirname)

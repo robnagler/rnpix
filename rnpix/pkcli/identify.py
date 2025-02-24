@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Identify photos and store in index.txt database.
 
 The directory structure of pictures is <rnpix_root>/yyyy/mm-dd/*.{jpg,png,...}
@@ -9,9 +8,10 @@ https://github.com/cebe/js-search
 :copyright: Copyright (c) 2016 Robert Nagler.  All Rights Reserved.
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
-from __future__ import absolute_import, division, print_function
+
+from pykern.pkcollections import PKDict
+from pykern.pkdebug import pkdc, pkdlog, pkdp
 from rnpix import common
-from pykern.pkdebug import pkdp, pkdlog
 import glob
 import os
 import os.path
@@ -60,40 +60,12 @@ def _clean_name(old):
     return new
 
 
-def _indexed():
-    res = {}
-    if not os.path.exists("index.txt"):
-        return res
-    with open("index.txt", "r") as f:
-        p = re.compile(r"^[^\s:]+")
-        for l in f:
-            l = l.rstrip()
-            if not l:
-                continue
-            if l.startswith("#"):
-                continue
-            m = p.search(l)
-            if not m:
-                print(l + ": invalid line")
-                continue
-            t = m.group(0)
-            if not os.path.exists(t):
-                print(t + ": indexed file does not exist")
-                continue
-            x = l.split(" ")
-            if len(x) == 2 and x[1] == "?":
-                # Unidentified
-                continue
-            res[t] = 1
-    return res
-
-
 def _need_to_index():
-    indexed = _indexed()
+    indexed = common.index_parse()
     res = set()
     t = set()
     for a in sorted(os.listdir("."), key=str.lower):
-        if not common.STILL.search(a):
+        if not common.KNOWN_EXT.search(a):
             continue
         a = _clean_name(a)
         p = _preview(a)
@@ -150,7 +122,7 @@ def _one_day(args):
         return p
 
     def _fixup_args(args):
-        i = _index_parse()
+        i = common.index_parse()
         if not i:
             return args
         n = args
@@ -171,34 +143,8 @@ def _one_day(args):
             if not os.path.exists(p):
                 _extract_jpg(a)
             n.remove(a)
-        _index_write(i)
+        common.index_write(i)
         return n
-
-    def _index_parse():
-        r = {}
-        if not os.path.exists("index.txt"):
-            return r
-        with open("index.txt", "r") as f:
-            for l in f:
-                x = _INDEX_RE.split(l, 1)
-                if not x:
-                    continue
-                if x[0] in r:
-                    pkdlog(
-                        "duplicate image={} in index.txt; skipping desc={}", x[0], x[1]
-                    )
-                    continue
-                r[x[0]] = x[1]
-        return r
-
-    def _index_update(image, msg):
-        i = _index_parse()
-        i[image] = f"{msg}\n"
-        _index_write(i)
-
-    def _index_write(values):
-        with open("index.txt", "w") as f:
-            f.write("".join(k + " " + v for k, v in values.items()))
 
     if not args:
         return
@@ -228,7 +174,7 @@ def _one_day(args):
                     os.remove(preview)
                 pkdlog("image={} removed", img)
             else:
-                _index_update(img, msg)
+                common.index_update(img, msg)
         else:
             pkdlog("image={} does not exist", img)
     try:

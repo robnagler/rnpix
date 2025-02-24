@@ -10,4 +10,4 @@ Documentation: https://rnpix.readthedocs.io
 
 License: https://www.apache.org/licenses/LICENSE-2.0.html
 
-Copyright (c) 2024 Rob Nagler.  All Rights Reserved.
+Copyright (c) 2024 Robert Nagler.  All Rights Reserved.

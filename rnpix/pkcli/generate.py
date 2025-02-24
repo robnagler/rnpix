@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
-"""?
+"""Generate html site
 
 :copyright: Copyright (c) 2016 Robert Nagler.  All Rights Reserved.
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
-from __future__ import absolute_import, division, print_function
 
 from pykern import pkcli
 from pykern import pkio
@@ -92,7 +90,7 @@ def _one_dir(force):
     d = os.getcwd()
 
     def err(msg):
-        pkdp("{}: {}".format(d, msg))
+        pkdlog("{}: {}".format(d, msg))
 
     m = _DIR_RE.search(d)
     if not m:
