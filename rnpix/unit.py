@@ -12,7 +12,7 @@ def image_create(path_dt):
         purebasename=common.exif_set(
             image_create_handle(path_dt.purebasename),
             path=path_dt,
-            date_time=common.date_time_parse(path),
+            date_time=common.date_time_parse(path_dt),
             description=path_dt.purebasename,
         ).strftime(common.BASE_FTIME)
     )

@@ -50,7 +50,7 @@ def test_date_time():
         e = _expect(d)
         pkeq(
             tuple(sorted(_paths(e))),
-            fix.exif_data(*_paths(e)),
+            fix.exif_data(*_paths(e), exiftool=False),
             "verify all files changed",
         )
         for k, v in e.items():
@@ -59,6 +59,6 @@ def test_date_time():
             pkeq(v.desc, a.description, "desc mismatch path={}", v)
         pkeq(
             tuple(),
-            fix.exif_data(*_paths(e)),
+            fix.exif_data(*_paths(e), exiftool=False),
             "files should not change a second time",
         )
