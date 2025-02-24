@@ -3,8 +3,10 @@
 :copyright: Copyright (c) 2022 Robert Nagler.  All Rights Reserved.
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
+
 import pytest
 import shutil
+
 
 @pytest.mark.skipif(shutil.which("convert") is None, reason="convert not available")
 def test_need_to_index(monkeypatch):
