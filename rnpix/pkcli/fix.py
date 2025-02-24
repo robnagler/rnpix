@@ -24,7 +24,7 @@ _LINE_RE = re.compile(r"^([^\s:]+):?\s*(.*)")
 _WEEK = datetime.timedelta(days=7)
 
 
-def exif_data(*paths, dry_run=False):
+def exif_data(*paths, dry_run=False, exiftool=False):
     index_cache = PKDict()
 
     def _check(path):
@@ -33,7 +33,10 @@ def exif_data(*paths, dry_run=False):
         path = pykern.pkio.py_path(path)
         if path.ext != ".jpg":
             return False
-        return _check_glob(path) and _ExifData(path, index_cache).need_update()
+        return (
+            _check_glob(path)
+            and _ExifData(path, index_cache, exiftool=exiftool).need_update()
+        )
 
     def _check_glob(path):
         l = pykern.pkio.sorted_glob(str(path.new(ext=".*")))
@@ -44,15 +47,20 @@ def exif_data(*paths, dry_run=False):
         return len(l) == 1
 
     def _update(path):
-        if d := _check(path):
-            if dry_run:
-                return d.path
-            return d.update()
-        return None
+        try:
+            if d := _check(path):
+                if dry_run:
+                    return d.path
+                return d.update()
+            return None
+        except Exception:
+            pkdlog("path={}", path)
+            raise
 
     if not paths:
         pykern.pkcli.command_error("must supply paths")
-    return tuple(sorted(filter(bool, map(_update, paths))))
+    rv = tuple(sorted(filter(bool, map(_update, paths))))
+    return "\n".join(rv) if exiftool else rv
 
 
 def relocate(*files, dst_root=None):
@@ -66,20 +74,29 @@ def relocate(*files, dst_root=None):
 
 
 class _ExifData:
-    def __init__(self, path, index_cache):
+    def __init__(self, path, index_cache, exiftool):
         def _desc(index_path):
             if (i := index_cache.get(index_path)) is None:
                 i = index_cache[index_path] = rnpix.common.index_parse(index_path)
             return i.get(self.path.basename)
 
         self.path = path
+        self.exiftool = exiftool
         with self.path.open("rb") as f:
-            self.img = exif.Image(f)
+            try:
+                self.img = exif.Image(f)
+                self.exif = rnpix.common.exif_parse(self.img)
+            except Exception as e:
+                if "UnpackError" not in getattr(type(e), "__name__", ""):
+                    raise
+                pkdlog("force update path={} exif error exception={}", path, type(e))
+                self.exiftool = True
+                self.img = None
+                self.exif = PKDict(date_time=None, description=None)
         self.path_dt = rnpix.common.date_time_parse(self.path)
         if not self.path_dt:
             raise ValueError(f"no date time in path={path}")
         # Always returns something valid
-        self.exif = rnpix.common.exif_parse(self.img)
         self.desc = _desc(self.path.dirpath())
 
     def need_update(self):
@@ -92,6 +109,17 @@ class _ExifData:
         return self if self.need_dt and self.need_desc else None
 
     def update(self):
+        if self.exiftool:
+            rv = "exiftool -overwrite_original"
+            if self.need_desc:
+                rv += " -ImageDescription='" + self.desc.replace("'", "'\"'\"'") + "'"
+            if self.need_dt:
+                rv += (
+                    " -XMP:DateTimeOriginal='"
+                    + self.path_dt.strftime(rnpix.common.ORIGINAL_FTIME)
+                    + "'"
+                )
+            return rv + f" '{self.path}'"
         k = PKDict(path=self.path)
         if self.need_desc:
             k.description = self.desc
