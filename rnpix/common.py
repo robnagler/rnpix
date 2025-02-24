@@ -87,9 +87,11 @@ def exif_parse(readable):
         if date_time is None:
             return None
         if z := getattr(exif_image, "offset_time_original", None):
-            return datetime.datetime.strptime(
-                date_time + z, ORIGINAL_FTIME + "%z"
-            ).astimezone(datetime.timezone.utc).replace(tzinfo=None)
+            return (
+                datetime.datetime.strptime(date_time + z, ORIGINAL_FTIME + "%z")
+                .astimezone(datetime.timezone.utc)
+                .replace(tzinfo=None)
+            )
         return datetime.datetime.strptime(date_time, ORIGINAL_FTIME)
 
     i = exif_image(readable)
@@ -114,7 +116,6 @@ def exif_set(readable, path=None, date_time=None, description=None):
         e.datetime_original = date_time.strftime(ORIGINAL_FTIME)
     if description is not None:
         e.image_description = description
-        pkdp(description)
     path.write(e.get_file(), "wb")
     return date_time
 
