@@ -4,11 +4,16 @@
 :license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
 
+import pytest
+import shutil
 
+
+@pytest.mark.skipif(shutil.which("exiftool") is None, reason="exiftool not available")
 def test_move_all(monkeypatch):
     _move_all(monkeypatch)
 
 
+@pytest.mark.skipif(shutil.which("exiftool") is None, reason="exiftool not available")
 def test_lock(monkeypatch):
     from pykern import pkunit, pkdebug, pkio
     import os
