@@ -87,9 +87,9 @@ def exif_parse(readable):
         if date_time is None:
             return None
         if z := getattr(exif_image, "offset_time_original", None):
-            return datetime.datetime.strptime(date_time + z, +"%z").astimezone(
-                datetime.timezone.utc
-            )
+            return datetime.datetime.strptime(
+                date_time + z, ORIGINAL_FTIME + "%z"
+            ).astimezone(datetime.timezone.utc).replace(tzinfo=None)
         return datetime.datetime.strptime(date_time, ORIGINAL_FTIME)
 
     i = exif_image(readable)
@@ -188,7 +188,7 @@ def move_one(src, dst_root=None):
         e = ".jpg"
     # CreationDate is in timezone as is DateTimeOriginal but not for movies
     z = (
-        ("-CreationDate", "-CreationDateValue", "-createdate")
+        ("-CreationDate", "-CreationDateValue", "-createdate", "-DateTimeOriginal")
         if MOVIE.search(src.basename)
         else ("-DateTimeOriginal",)
     )
