@@ -24,7 +24,7 @@ _LINE_RE = re.compile(r"^([^\s:]+):?\s*(.*)")
 _WEEK = datetime.timedelta(days=7)
 
 
-def exif_data(*paths, dry_run=False, exiftool=False):
+def exif_data(*paths, dry_run=False, exiftool=True):
     index_cache = PKDict()
 
     def _check(path):
@@ -106,7 +106,7 @@ class _ExifData:
             not self.exif.date_time or abs(self.path_dt - self.exif.date_time) > _WEEK
         )
         self.need_desc = bool(self.desc) and self.exif.description != self.desc
-        return self if self.need_dt and self.need_desc else None
+        return self if self.need_dt or self.need_desc else None
 
     def update(self):
         if self.exiftool:
