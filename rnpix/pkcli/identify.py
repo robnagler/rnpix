@@ -98,6 +98,7 @@ def _one_day(args):
             # but better to extract the jpg preview and not modify the
             # camera type
             ("arw", ["exiftool", "-b", "-PreviewImage", image]),
+            ("nef", ["exiftool", "-b", "-PreviewImage", image]),
             # can't produce images that work with Preview so hard to test, this wroks
             ("icns", ["convert", image]),
             # Suffix [5] produces an image 3072 by 2048 ("16 Base")
@@ -110,7 +111,7 @@ def _one_day(args):
             p = re.sub(f"\\.{e}$", ".jpg", image)
             if os.path.exists(p):
                 break
-            if e in "arw":
+            if e in ("arw", "nef"):
                 i = subprocess.check_output(s)
                 with open(p, "wb") as f:
                     f.write(i)
