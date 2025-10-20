@@ -68,6 +68,9 @@ def _need_to_index():
         if not common.KNOWN_EXT.search(a):
             continue
         a = _clean_name(a)
+        if a.endswith("dng"):
+            # Never index DNGs
+            continue
         p = _preview(a)
         if p:
             if os.path.exists(p):
@@ -99,6 +102,7 @@ def _one_day(args):
             # camera type
             ("arw", ["exiftool", "-b", "-PreviewImage", image]),
             ("nef", ["exiftool", "-b", "-PreviewImage", image]),
+            ("cr3", ["exiftool", "-b", "-PreviewImage", image]),
             # can't produce images that work with Preview so hard to test, this wroks
             ("icns", ["convert", image]),
             # Suffix [5] produces an image 3072 by 2048 ("16 Base")
@@ -111,7 +115,7 @@ def _one_day(args):
             p = re.sub(f"\\.{e}$", ".jpg", image)
             if os.path.exists(p):
                 break
-            if e in ("arw", "nef"):
+            if e in ("arw", "nef", "cr3"):
                 i = subprocess.check_output(s)
                 with open(p, "wb") as f:
                     f.write(i)
