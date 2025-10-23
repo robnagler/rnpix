@@ -21,7 +21,7 @@ import time
 _MOVIES = "3gp|mp4|mov|mpg|avi|mts|m4v"
 
 # icns is for unit testing
-_NEED_JPG = "icns|dng|pcd|arw|nef|cr2|skp"
+_NEED_JPG = "icns|dng|pcd|arw|nef|cr2|cr3|skp"
 
 _STILL = "jpg|heic|png|tif|gif|psd|pdf|thm|jpeg"
 
@@ -189,7 +189,7 @@ def move_one(src, dst_root=None):
         e = ".jpg"
     # CreationDate is in timezone as is DateTimeOriginal but not for movies
     z = (
-        ("-CreationDate", "-CreationDateValue", "-createdate", "-DateTimeOriginal")
+        ("-DateTimeOriginal", "-CreationDate", "-CreationDateValue", "-createdate")
         if MOVIE.search(src.basename)
         else ("-DateTimeOriginal",)
     )
