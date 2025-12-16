@@ -104,11 +104,11 @@ def _one_day(args):
             ("nef", ["exiftool", "-b", "-PreviewImage", image]),
             ("cr3", ["exiftool", "-b", "-PreviewImage", image]),
             # can't produce images that work with Preview so hard to test, this wroks
-            ("icns", ["convert", image]),
+            ("icns", ["magick", image]),
             # Suffix [5] produces an image 3072 by 2048 ("16 Base")
-            ("pcd", ["convert", image + "[5]"]),
+            ("pcd", ["magick", image + "[5]"]),
             # must have a suffix so this will produce an error
-            ("skp", ["convert", "YOU-NEED-TO-RUN-SKETCHUP"]),
+            ("skp", ["magick", "YOU-NEED-TO-RUN-SKETCHUP"]),
         ):
             if not image.endswith("." + e):
                 continue

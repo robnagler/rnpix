@@ -15,7 +15,7 @@ import py.path
 import re
 import subprocess
 
-# for f in *.jpg; do convert -resize x200 -quality 50% $f t\
+# for f in *.jpg; do magick -resize x200 -quality 50% $f t\
 #    /$f; done
 # https://github.com/cebe/js-search
 
@@ -121,7 +121,8 @@ def _thumb(image, force):
         try:
             subprocess.check_call(
                 [
-                    "convert",
+                    "magick",
+                    image + "[0]",
                     "-thumbnail",
                     "x" + width,
                     "-quality",
@@ -130,7 +131,6 @@ def _thumb(image, force):
                     "white",
                     "-alpha",
                     "remove",
-                    image + "[0]",
                     t,
                 ]
             )
