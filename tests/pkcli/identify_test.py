@@ -8,7 +8,7 @@ import pytest
 import shutil
 
 
-@pytest.mark.skipif(shutil.which("convert") is None, reason="convert not available")
+@pytest.mark.skipif(shutil.which("magick") is None, reason="magick not available")
 def test_need_to_index(monkeypatch):
     from pykern import pkunit, pkio, pkjson
     from pykern.pkcollections import PKDict

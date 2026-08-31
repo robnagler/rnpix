@@ -60,6 +60,11 @@ def _clean_name(old):
     return new
 
 
+def _dng_is_derived(dng):
+    b = dng[: -len("dng")]
+    return any(e != "dng" and os.path.exists(b + e) for e in common.NEED_JPG_EXT)
+
+
 def _need_to_index():
     indexed = common.index_parse()
     res = set()
@@ -68,8 +73,8 @@ def _need_to_index():
         if not common.KNOWN_EXT.search(a):
             continue
         a = _clean_name(a)
-        if a.endswith("dng"):
-            # Never index DNGs
+        if a.endswith("dng") and _dng_is_derived(a):
+            # A dng alone on its basename is the source, not a derivative
             continue
         if a.endswith("jpg") and os.path.exists(a.replace(".jpg", ".heic")):
             # Do not index jpg if there's a matching heic
@@ -106,6 +111,7 @@ def _one_day(args):
             ("arw", ["exiftool", "-b", "-PreviewImage", image]),
             ("nef", ["exiftool", "-b", "-PreviewImage", image]),
             ("cr3", ["exiftool", "-b", "-PreviewImage", image]),
+            ("dng", ["exiftool", "-b", "-PreviewImage", image]),
             # can't produce images that work with Preview so hard to test, this wroks
             ("icns", ["magick", image]),
             # Suffix [5] produces an image 3072 by 2048 ("16 Base")
@@ -118,7 +124,7 @@ def _one_day(args):
             p = re.sub(f"\\.{e}$", ".jpg", image)
             if os.path.exists(p):
                 break
-            if e in ("arw", "nef", "cr3"):
+            if e in common.EXIFTOOL_PREVIEW_EXT:
                 i = subprocess.check_output(s)
                 with open(p, "wb") as f:
                     f.write(i)
