@@ -8,6 +8,13 @@ import pytest
 import shutil
 
 
+def test_add_to_index_takes_no_args():
+    from rnpix.pkcli import identify
+
+    with pytest.raises(TypeError):
+        identify.add_to_index("07-28")
+
+
 @pytest.mark.skipif(shutil.which("magick") is None, reason="magick not available")
 def test_need_to_index(monkeypatch):
     from pykern import pkunit, pkio, pkjson

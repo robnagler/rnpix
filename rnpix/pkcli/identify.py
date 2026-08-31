@@ -24,12 +24,9 @@ import uuid
 _INDEX_RE = re.compile(r"[\s:]+")
 
 
-def add_to_index(*date_dir):
-    """Search in date_dir or all dirs in year"""
-    if date_dir:
-        for d in date_dir:
-            _one_day(date_dir)
-    elif _search_all_dirs(True) is None:
+def add_to_index():
+    """Search all dirs in year, or the current day"""
+    if _search_all_dirs(True) is None:
         _one_day(_need_to_index())
 
 
