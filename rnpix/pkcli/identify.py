@@ -71,8 +71,8 @@ def _need_to_index():
         if a.endswith("dng"):
             # Never index DNGs
             continue
-        if a.endswith("heic") and os.path.exists(a.replace(".heic", ".jpg")):
-            # Do not index heic if there's a matching jpg
+        if a.endswith("jpg") and os.path.exists(a.replace(".jpg", ".heic")):
+            # Do not index jpg if there's a matching heic
             continue
         p = _preview(a)
         if p:

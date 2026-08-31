@@ -14,6 +14,7 @@ import os.path
 import py.path
 import re
 import subprocess
+import rnpix.common
 
 # for f in *.jpg; do magick -resize x200 -quality 50% $f t\
 #    /$f; done
@@ -119,22 +120,43 @@ def _thumb(image, force):
     if force or not os.path.exists(t):
         d = pkio.mkdir_parent(py.path.local(t).dirname)
         try:
-            subprocess.check_call(
-                [
-                    "magick",
-                    image + "[0]",
-                    "-thumbnail",
-                    "x" + width,
-                    "-quality",
-                    quality + "%",
-                    "-background",
-                    "white",
-                    "-alpha",
-                    "remove",
-                    t,
-                ]
-            )
+            if rnpix.common.MOVIE.search(image):
+                subprocess.check_call(
+                    [
+                        "ffmpeg",
+                        "-y",
+                        "-i",
+                        image,
+                        "-frames:v",
+                        "1",
+                        "-qscale:v",
+                        # qscale is 1-31 with 1 best
+                        "4",
+                        "-vf",
+                        f"scale=-1:{width}",
+                        "-hide_banner",
+                        "-loglevel",
+                        "error",
+                        t,
+                    ]
+                )
+            else:
+                subprocess.check_call(
+                    [
+                        "magick",
+                        image + "[0]",
+                        "-thumbnail",
+                        "x" + width,
+                        "-quality",
+                        quality + "%",
+                        "-background",
+                        "white",
+                        "-alpha",
+                        "remove",
+                        t,
+                    ]
+                )
         except Exception:
-            pkdlog("dir={}", d)
+            pkdlog("file={} thumb={} dir={}", image, t, d)
             raise
     return t
