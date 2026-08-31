@@ -74,9 +74,7 @@ def _need_to_index():
             continue
         a = _clean_name(a)
         if a.endswith("dng") and _dng_is_derived(a):
-            # A dng beside the file it came from is derived. A dng that is
-            # the only source on its basename is what Lightroom leaves when
-            # it converts and the original is deleted, so it does get a line.
+            # A dng alone on its basename is the source, not a derivative
             continue
         if a.endswith("jpg") and os.path.exists(a.replace(".jpg", ".heic")):
             # Do not index jpg if there's a matching heic

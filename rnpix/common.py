@@ -25,7 +25,7 @@ _NEED_JPG = "icns|dng|pcd|arw|nef|cr2|cr3|skp"
 
 NEED_JPG_EXT = tuple(_NEED_JPG.split("|"))
 
-# Of `_NEED_JPG`, those carrying an embedded preview exiftool can extract.
+# Subset of _NEED_JPG with previews exiftool can extract
 EXIFTOOL_PREVIEW_EXT = ("arw", "nef", "cr3", "dng")
 
 _STILL = "jpg|heic|png|tif|gif|psd|pdf|thm|jpeg"
