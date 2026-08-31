@@ -59,7 +59,7 @@ def _clean_name(old):
 
 def _dng_is_derived(dng):
     b = dng[: -len("dng")]
-    return any(e != "dng" and os.path.exists(b + e) for e in common.NEED_JPG_EXT)
+    return any(os.path.exists(b + e) for e in common.DNG_SOURCE_EXT)
 
 
 def _need_to_index():

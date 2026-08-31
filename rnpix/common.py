@@ -28,6 +28,11 @@ NEED_JPG_EXT = tuple(_NEED_JPG.split("|"))
 # Subset of _NEED_JPG with previews exiftool can extract
 EXIFTOOL_PREVIEW_EXT = ("arw", "nef", "cr3", "dng")
 
+# A dng is a derivative when one of these shares its basename. heic is here
+# and not in _NEED_JPG because it is viewable, but it is still a source a
+# dng can be converted from.
+DNG_SOURCE_EXT = tuple(e for e in NEED_JPG_EXT if e != "dng") + ("heic",)
+
 _STILL = "jpg|heic|png|tif|gif|psd|pdf|thm|jpeg"
 
 KNOWN_EXT = re.compile(
