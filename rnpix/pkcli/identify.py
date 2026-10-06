@@ -57,9 +57,9 @@ def _clean_name(old):
     return new
 
 
-def _dng_is_derived(dng):
-    b = dng[: -len("dng")]
-    return any(os.path.exists(b + e) for e in common.DNG_SOURCE_EXT)
+def _is_derived(path, sources):
+    b = path[: path.rindex(".") + 1]
+    return any(os.path.exists(b + e) for e in sources)
 
 
 def _need_to_index():
@@ -70,11 +70,10 @@ def _need_to_index():
         if not common.KNOWN_EXT.search(a):
             continue
         a = _clean_name(a)
-        if a.endswith("dng") and _dng_is_derived(a):
-            # A dng alone on its basename is the source, not a derivative
+        # A dng, jpg, or tif alone on its basename is the source, not a derivative
+        if a.endswith(".dng") and _is_derived(a, common.DNG_SOURCE_EXT):
             continue
-        if a.endswith("jpg") and os.path.exists(a.replace(".jpg", ".heic")):
-            # Do not index jpg if there's a matching heic
+        if a.endswith((".jpg", ".tif")) and _is_derived(a, common.STILL_SOURCE_EXT):
             continue
         p = _preview(a)
         if p:

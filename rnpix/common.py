@@ -33,6 +33,10 @@ EXIFTOOL_PREVIEW_EXT = ("arw", "nef", "cr3", "dng")
 # dng can be converted from.
 DNG_SOURCE_EXT = tuple(e for e in NEED_JPG_EXT if e != "dng") + ("heic",)
 
+# A jpg or tif is a derivative (preview or external-editor round trip) when
+# one of these shares its basename.
+STILL_SOURCE_EXT = DNG_SOURCE_EXT + ("dng",)
+
 _STILL = "jpg|heic|png|tif|gif|psd|pdf|thm|jpeg"
 
 KNOWN_EXT = re.compile(
